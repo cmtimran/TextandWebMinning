@@ -121,8 +121,6 @@ graph TD
 ├── server.py                         # Production Flask REST API backend
 ├── app.py                            # CLI / Terminal Batch Mining Script
 ├── requirements.txt                  # Python dependencies
-├── Procfile                          # Cloud deployment entry point (gunicorn)
-├── vercel.json                       # Vercel serverless configuration
 ├── run.bat                           # 1-Click Windows execution script
 ├── SYSTEM_WORKFLOW.md                # System Architecture specification
 └── README.md                         # Project documentation
@@ -184,18 +182,18 @@ Double-click `run.bat` in the root folder.
 ### Deploy to Render.com (Recommended Free Hosting)
 1. Sign up on [Render.com](https://render.com).
 2. Click **New +** -> **Web Service**.
-3. Connect your GitHub repository: `cmtimran/Text-and-Web-Minning`.
+3. Connect your GitHub repository: `cmtimran/TextandWebMinning`.
 4. Configure settings:
    - **Environment**: `Python 3`
    - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn server:app`
+   - **Start Command**: `python server.py`
 5. Click **Deploy Web Service**!
 
 ### Deploy to Railway.app
 1. Go to [Railway.app](https://railway.app).
 2. Click **New Project** -> **Deploy from GitHub repo**.
-3. Select `Text-and-Web-Minning`.
-4. Railway will auto-detect `Procfile` and `requirements.txt` and generate your public URL.
+3. Select `TextandWebMinning`.
+4. Railway will auto-detect `requirements.txt` and generate your public URL.
 
 ---
 

@@ -1,0 +1,3724 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clinical Intelligence & Text Mining Platform</title>
+
+  <!-- Clean Modern Typography: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+
+
+  <!-- Local Vendor Scripts -->
+  <script src="/vendor/three.min.js"></script>
+  <script src="/vendor/OrbitControls.js"></script>
+  <script src="/vendor/chart.umd.min.js"></script>
+
+  <style>
+    /* ══════════════════════════════════════════════════════════════
+       THEME VARIABLES (Light Mode Default & Dark Mode)
+       ══════════════════════════════════════════════════════════════ */
+    :root,
+    [data-theme="light"] {
+      --bg-canvas: #f8fafc;
+      --bg-overlay: rgba(248, 250, 252, 0.88);
+      --card-bg: rgba(255, 255, 255, 0.94);
+      --card-border: #e2e8f0;
+      --card-border-hover: #0284c7;
+      --card-shadow: 0 2px 8px -1px rgba(15, 23, 42, 0.05), 0 1px 3px -1px rgba(15, 23, 42, 0.03);
+      --header-bg: rgba(255, 255, 255, 0.96);
+      --header-border: #e2e8f0;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --text-sub: #475569;
+      --input-bg: #ffffff;
+      --input-border: #cbd5e1;
+      --input-text: #1e293b;
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --primary-light: rgba(2, 132, 199, 0.08);
+      --accent: #6366f1;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --badge-bg: #f1f5f9;
+      --badge-text: #0284c7;
+      --tab-bg: #f1f5f9;
+      --tab-active-bg: #ffffff;
+      --tab-active-text: #0284c7;
+      --tab-active-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+      --scroll-thumb: #cbd5e1;
+      --summary-box-bg: #f0fdf4;
+      --summary-box-border: #bbf7d0;
+      --summary-box-text: #166534;
+      --glass-blur: blur(12px);
+      --particle-color: 0x0284c7;
+      --synapse-color: 0x38bdf8;
+      --chart-grid: rgba(148, 163, 184, 0.15);
+    }
+
+    [data-theme="dark"] {
+      --bg-canvas: #030712;
+      --bg-overlay: rgba(3, 7, 18, 0.82);
+      --card-bg: rgba(15, 23, 42, 0.82);
+      --card-border: rgba(56, 189, 248, 0.2);
+      --card-border-hover: #38bdf8;
+      --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      --header-bg: rgba(15, 23, 42, 0.9);
+      --header-border: rgba(255, 255, 255, 0.08);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-sub: #cbd5e1;
+      --input-bg: rgba(3, 7, 18, 0.75);
+      --input-border: rgba(56, 189, 248, 0.25);
+      --input-text: #f8fafc;
+      --primary: #0284c7;
+      --primary-hover: #38bdf8;
+      --primary-light: rgba(56, 189, 248, 0.15);
+      --accent: #818cf8;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --danger: #f87171;
+      --badge-bg: rgba(56, 189, 248, 0.15);
+      --badge-text: #38bdf8;
+      --tab-bg: rgba(15, 23, 42, 0.8);
+      --tab-active-bg: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+      --tab-active-text: #ffffff;
+      --tab-active-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+      --scroll-thumb: rgba(56, 189, 248, 0.3);
+      --summary-box-bg: rgba(16, 185, 129, 0.1);
+      --summary-box-border: rgba(16, 185, 129, 0.35);
+      --summary-box-text: #a7f3d0;
+      --particle-color: 0x38bdf8;
+      --synapse-color: 0x818cf8;
+      --chart-grid: rgba(255, 255, 255, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg-canvas);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-weight: 400;
+      font-size: 0.82rem;
+      letter-spacing: -0.01em;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      user-select: none;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* ─── 3D Fullscreen Canvas ────────────────────────────── */
+    #webgl-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      display: block;
+    }
+
+    /* ─── App Viewport (100vh strictly, NO window scrollbar) ── */
+    .app-viewport {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      pointer-events: none;
+    }
+
+    header,
+    main,
+    .interactive,
+    .patient-modal {
+      pointer-events: auto;
+    }
+
+    /* ─── Sleek Compact Header ─────────────────────────────────── */
+    header {
+      height: 48px;
+      min-height: 48px;
+      background: var(--header-bg);
+      backdrop-filter: var(--glass-blur);
+      border-bottom: 1px solid var(--header-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1rem;
+      z-index: 30;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .brand-logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #0284c7, #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      color: white;
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+    }
+
+    .brand-title {
+      font-size: 0.98rem;
+      font-weight: 550;
+      letter-spacing: -0.015em;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .brand-title span {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .brand-subtitle {
+      font-size: 0.64rem;
+      color: var(--text-muted);
+      font-weight: 400;
+      letter-spacing: 0.01em;
+    }
+
+    .brand-tag {
+      font-size: 0.68rem;
+      color: var(--badge-text);
+      background: var(--badge-bg);
+      border: 1px solid rgba(2, 132, 199, 0.2);
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+    }
+
+    /* Compact Navigation Bar */
+    .tab-nav {
+      display: flex;
+      gap: 2px;
+      background: #f1f5f9;
+      border: 1px solid var(--card-border);
+      padding: 2px;
+      border-radius: 8px;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.76rem;
+      font-weight: 450;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+      font-family: inherit;
+      letter-spacing: -0.01em;
+    }
+
+    .nav-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.4);
+    }
+
+    .nav-btn.active {
+      background: #ffffff;
+      color: var(--primary);
+      font-weight: 500;
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      background: #ffffff;
+      border: 1px solid var(--card-border);
+      padding: 3px 9px;
+      border-radius: 6px;
+      font-family: inherit;
+      font-weight: 450;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 6px var(--success);
+      animation: pulse-dot 2s infinite;
+    }
+
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.35;
+        transform: scale(0.85);
+      }
+    }
+
+    /* ─── Main Workspace Layout ────────────────────────────── */
+    main.main-workspace {
+      flex: 1;
+      height: calc(100vh - 48px);
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      padding: 0.35rem 0.5rem;
+      gap: 0.5rem;
+      overflow: hidden;
+    }
+
+    main.main-workspace.full-width {
+      grid-template-columns: 1fr;
+    }
+
+    /* Glass Panels */
+    .glass-panel {
+      background: var(--card-bg);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 0.55rem 0.65rem;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .scroll-body {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 3px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.42rem;
+    }
+
+    .scroll-body::-webkit-scrollbar,
+    .content-area::-webkit-scrollbar,
+    .modal-body::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .scroll-body::-webkit-scrollbar-thumb,
+    .content-area::-webkit-scrollbar-thumb,
+    .modal-body::-webkit-scrollbar-thumb {
+      background: var(--card-border);
+      border-radius: 999px;
+    }
+
+    .scroll-body::-webkit-scrollbar-thumb:hover {
+      background: var(--primary);
+    }
+
+    .panel-header {
+      margin-bottom: 4px;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 4px;
+    }
+
+    .panel-title {
+      font-size: 0.82rem;
+      font-weight: 650;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      letter-spacing: -0.01em;
+      line-height: 1.25;
+    }
+
+    .panel-badge {
+      font-size: 0.64rem;
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(2, 132, 199, 0.2);
+    }
+
+    /* Form Inputs */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .form-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .glass-select,
+    .glass-input,
+    .glass-textarea {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 6px;
+      padding: 4px 8px;
+      color: var(--input-text);
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 400;
+      outline: none;
+      transition: all 0.15s ease;
+      box-sizing: border-box;
+    }
+
+    .glass-select,
+    .glass-input {
+      height: 28px;
+      line-height: 1.2;
+    }
+
+    .glass-select:focus,
+    .glass-input:focus,
+    .glass-textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-light);
+    }
+
+    .glass-textarea {
+      height: 56px;
+      min-height: 44px;
+      resize: vertical;
+      line-height: 1.35;
+      font-size: 0.74rem;
+      padding: 5px 8px;
+    }
+
+    /* Primary Action Buttons */
+    .action-btn {
+      width: 100%;
+      padding: 5px 10px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+      border: none;
+      color: white;
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 2px 6px rgba(2, 132, 199, 0.2);
+      transition: all 0.15s ease;
+      font-family: inherit;
+      height: 32px;
+      min-height: 32px;
+      margin-top: 3px;
+      flex-shrink: 0;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+      filter: brightness(1.05);
+    }
+
+    .action-btn:active {
+      transform: translateY(0);
+    }
+
+    /* ─── Right Content Area ───────────────────────────────── */
+    .content-area {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      height: 100%;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    /* Unified 5-Column Metrics Strip */
+    .metrics-strip {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.65rem;
+    }
+
+    .metric-card {
+      background: var(--card-bg);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.55rem 0.8rem;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-1px);
+      border-color: var(--card-border-hover);
+    }
+
+    .metric-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #0284c7, #6366f1);
+    }
+
+    .metric-label {
+      font-size: 0.63rem;
+      text-transform: uppercase;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+
+    .metric-value {
+      font-size: 1.25rem;
+      font-weight: 550;
+      color: var(--text-main);
+      margin-top: 2px;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: -0.02em;
+    }
+
+    /* Module Views */
+    .module-view {
+      display: none;
+      animation: fadeInView 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .module-view.active-view {
+      display: flex;
+    }
+
+    @keyframes fadeInView {
+      from {
+        opacity: 0;
+        transform: translateY(3px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Result Cards */
+    .result-card {
+      background: var(--card-bg);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.85rem;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+      position: relative;
+    }
+
+    .summary-text-box {
+      background: var(--summary-box-bg);
+      border: 1px solid var(--summary-box-border);
+      border-left: 4px solid var(--success);
+      padding: 0.75rem 0.95rem;
+      border-radius: 6px;
+      line-height: 1.55;
+      font-size: 0.84rem;
+      font-weight: 400;
+      color: var(--summary-box-text);
+      margin-top: 6px;
+    }
+
+    .tag-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 6px;
+    }
+
+    .entity-tag {
+      background: var(--badge-bg);
+      border: 1px solid rgba(2, 132, 199, 0.2);
+      color: var(--badge-text);
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-size: 0.73rem;
+      font-weight: 450;
+    }
+
+    /* Search Results & Clickable Case Cards */
+    .search-item {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 7px;
+      padding: 0.75rem 0.9rem;
+      margin-bottom: 0.55rem;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+
+    .search-item:hover {
+      border-color: var(--primary);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(2, 132, 199, 0.12);
+    }
+
+    .clickable-card {
+      cursor: pointer;
+      position: relative;
+    }
+
+    .view-detail-hint {
+      font-size: 0.67rem;
+      font-weight: 500;
+      color: var(--primary);
+      background: rgba(2, 132, 199, 0.08);
+      padding: 1px 6px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      border: 1px solid rgba(2, 132, 199, 0.18);
+    }
+
+    .search-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3px;
+    }
+
+    .match-pill {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.68rem;
+      font-weight: 500;
+    }
+
+    /* ─── File Upload & Drag-and-Drop Zone ────────────────────── */
+    .file-drop-zone {
+      border: 1.5px dashed var(--input-border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      margin-bottom: 3px;
+      background: var(--input-bg);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      height: 28px;
+      box-sizing: border-box;
+      user-select: none;
+      font-size: 0.72rem;
+    }
+
+    .file-drop-zone:hover,
+    .file-drop-zone.dragover,
+    .file-drop-zone.drag-over {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    /* ─── IR Search Term Highlight ────────────────────────────── */
+    .query-mark {
+      background: #fef08a;
+      color: #854d0e;
+      padding: 0 4px;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+
+    [data-theme="dark"] .query-mark {
+      background: #854d0e;
+      color: #fef08a;
+    }
+
+    /* ─── Toast Notifications ─────────────────────────────────── */
+    .toast-container {
+      position: fixed;
+      bottom: 22px;
+      right: 22px;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast-msg {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 11px 18px;
+      border-radius: 8px;
+      font-size: 0.83rem;
+      font-weight: 550;
+      box-shadow: 0 12px 35px -4px rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      animation: toastIn 0.25s cubic-bezier(0.16, 1, 0.3, 1), toastOut 0.35s ease 3.1s forwards;
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toast-msg strong {
+      color: #38bdf8;
+      font-weight: 600;
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes toastOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-8px); }
+    }
+
+    /* ─── Print Styles ────────────────────────────────────────── */
+    @media print {
+      #three-canvas, #left-sidebar-panel, .header-panel, .metrics-strip, .nav-btn, .modal-backdrop, .pm-mini-btn, .action-btn, #theme-toggle-btn {
+        display: none !important;
+      }
+      body, html {
+        overflow: visible !important;
+        height: auto !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      .main-workspace, #view-analysis, #card-summary {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-shadow: none !important;
+        border: none !important;
+        background: #ffffff !important;
+        padding: 0 !important;
+      }
+    }
+
+    /* ─── 3D HUD (Compact in Bottom of Sidebar) ─────────────── */
+    .hud-controls-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+      margin-top: 5px;
+      flex-shrink: 0;
+      height: 28px;
+      box-sizing: border-box;
+    }
+
+    .hud-btn {
+      background: var(--tab-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.68rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+      line-height: 18px;
+      height: 22px;
+    }
+
+    .hud-btn:hover {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    /* ─── Loading Animations ────────────────────────────────── */
+    .processing-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--card-bg);
+      backdrop-filter: blur(8px);
+      border-radius: 8px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      z-index: 50;
+    }
+
+    .spinner-ring {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(2, 132, 199, 0.15);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin-smooth 0.85s linear infinite;
+    }
+
+    @keyframes spin-smooth {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loading-pulse-text {
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--primary);
+      letter-spacing: 0.01em;
+      animation: pulse-txt 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-txt {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.45;
+      }
+    }
+
+    /* ─── Patient Record Details Modal ──────────────────────── */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(6px);
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      pointer-events: auto;
+    }
+
+    .patient-modal {
+      background: var(--card-bg, #ffffff);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      width: 100%;
+      max-width: 860px;
+      max-height: 88vh;
+      box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.2);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: popModal 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    [data-theme="dark"] .patient-modal {
+      background: #0f172a;
+    }
+
+    @keyframes popModal {
+      from {
+        transform: scale(0.96);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .modal-header {
+      padding: 0.75rem 1.1rem;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f8fafc;
+    }
+
+    [data-theme="dark"] .modal-header {
+      background: #0b1120;
+    }
+
+    .modal-title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .modal-title {
+      font-size: 0.96rem;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      font-size: 1.25rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      line-height: 1;
+      transition: all 0.15s ease;
+    }
+
+    .modal-close-btn:hover {
+      background: #e2e8f0;
+      color: var(--text-main);
+    }
+
+    .modal-body {
+      padding: 0.95rem 1.1rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .modal-vitals-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+      background: #f8fafc;
+      border: 1px solid var(--card-border);
+      padding: 0.65rem 0.8rem;
+      border-radius: 7px;
+    }
+
+    [data-theme="dark"] .modal-vitals-strip {
+      background: rgba(3, 7, 18, 0.5);
+    }
+
+    .vital-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .vital-item-lbl {
+      font-size: 0.63rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .vital-item-val {
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--text-main);
+    }
+
+    .clinical-narrative-box {
+      background: #ffffff;
+      border: 1px solid var(--card-border);
+      border-radius: 7px;
+      padding: 0.85rem 1rem;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--text-main);
+      font-weight: 400;
+      white-space: pre-wrap;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+
+    [data-theme="dark"] .clinical-narrative-box {
+      background: rgba(3, 7, 18, 0.6);
+    }
+
+    /* ─── In-Modal 3D Deep Mining Clinical Intelligence ─── */
+    .pm-analysis-section {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.95rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      animation: fadeInView 0.25s ease forwards;
+    }
+
+    .pm-loading-box {
+      background: var(--badge-bg);
+      border: 1px dashed var(--primary);
+      border-radius: 8px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .pm-analysis-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .pm-3d-synapse-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: #0284c7;
+      background: rgba(2, 132, 199, 0.09);
+      border: 1px solid rgba(2, 132, 199, 0.25);
+      border-radius: 999px;
+      padding: 3px 9px;
+      font-weight: 500;
+    }
+
+    [data-theme="dark"] .pm-3d-synapse-pill {
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.15);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+
+    .pm-pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #0284c7;
+      box-shadow: 0 0 6px #0284c7;
+      animation: pulse-txt 1s ease-in-out infinite alternate;
+    }
+
+    [data-theme="dark"] .pm-pulse-dot {
+      background: #38bdf8;
+      box-shadow: 0 0 8px #38bdf8;
+    }
+
+    .pm-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.6rem;
+    }
+
+    @media (max-width: 640px) {
+      .pm-metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .pm-metric-card {
+      background: var(--tab-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 7px;
+      padding: 0.65rem 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      transition: all 0.15s ease;
+    }
+
+    .pm-metric-card:hover {
+      border-color: var(--primary);
+    }
+
+    .pm-metric-lbl {
+      font-size: 0.63rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.02em;
+    }
+
+    .pm-metric-val {
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: var(--primary);
+      line-height: 1.25;
+      margin-top: 1px;
+    }
+
+    .pm-metric-sub {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+
+    .pm-subcard {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 7px;
+      padding: 0.75rem 0.85rem;
+    }
+
+    .pm-mini-btn {
+      background: var(--tab-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 0.68rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+
+    .pm-mini-btn:hover {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .pm-summary-text {
+      font-size: 0.83rem;
+      line-height: 1.6;
+      color: var(--summary-box-text);
+      font-weight: 450;
+      white-space: pre-wrap;
+    }
+
+    .pm-spec-bars-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .pm-spec-row {
+      display: grid;
+      grid-template-columns: 140px 1fr 45px;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.72rem;
+    }
+
+    .pm-spec-name {
+      color: var(--text-main);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pm-spec-track {
+      background: var(--badge-bg);
+      border: 1px solid var(--card-border);
+      height: 7px;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .pm-spec-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+
+    .pm-spec-pct {
+      font-weight: 600;
+      color: var(--primary);
+      text-align: right;
+    }
+
+    .pm-ner-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+      margin-top: 4px;
+    }
+
+    .pm-ner-item {
+      background: var(--tab-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 0.45rem 0.65rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .pm-ner-lbl {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .pm-ner-val {
+      font-size: 0.76rem;
+      font-weight: 500;
+      color: var(--text-main);
+    }
+
+    .modal-footer {
+      padding: 0.65rem 1.1rem;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f8fafc;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    [data-theme="dark"] .modal-footer {
+      background: #0b1120;
+    }
+
+    /* Three.js Tooltip */
+    #three-tooltip {
+      position: fixed;
+      display: none;
+      background: var(--card-bg);
+      border: 1px solid var(--primary);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.78rem;
+      pointer-events: none;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      max-width: 220px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Fullscreen 3D Canvas -->
+  <canvas id="webgl-canvas"></canvas>
+
+  <!-- 3D Node Hover Tooltip -->
+  <div id="three-tooltip">
+    <div id="tt-name" style="font-weight: 700; color: var(--primary); font-size: 0.95rem; margin-bottom: 3px;">Specialty
+    </div>
+    <div id="tt-count" style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 7px;">0 clinical records
+    </div>
+    <div style="height: 4px; background: rgba(0,0,0,0.1); border-radius: 2px;">
+      <div id="tt-bar"
+        style="height: 100%; border-radius: 2px; background: linear-gradient(90deg, #0284c7, #6366f1); width: 0%;">
+      </div>
+    </div>
+  </div>
+
+  <!-- UI Viewport -->
+  <div class="app-viewport">
+
+    <!-- Top Header -->
+    <header>
+      <div class="brand-wrap">
+        <div class="brand-logo">🏥</div>
+        <div>
+          <div class="brand-title">MediMine <span>AI</span></div>
+          <div class="brand-subtitle">Clinical Intelligence & Text Mining Platform</div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="tab-nav">
+        <button class="nav-btn active" onclick="switchView('analysis')">🔍 Deep Mining</button>
+        <button class="nav-btn" onclick="switchView('ir-search')">🔎 IR Semantic Search</button>
+        <button class="nav-btn" onclick="switchView('ml-classify')">🏷️ ML Classifier</button>
+        <button class="nav-btn" onclick="switchView('analytics')">🌐 Big Data Analytics</button>
+        <button class="nav-btn" onclick="switchView('batch')">⚡ Batch Engine</button>
+      </div>
+
+      <!-- Actions: Live Status -->
+      <div class="header-actions">
+        <div class="status-badge">
+          <div class="status-dot"></div>
+          <span id="corpus-status">Corpus: 4,966 Notes</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Patient Record Details Modal -->
+    <div id="patient-modal-backdrop" class="modal-backdrop" onclick="handleBackdropClick(event)">
+      <div class="patient-modal" role="dialog" aria-modal="true">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <div class="modal-title">
+              <span id="pm-title">Patient Case Record</span>
+              <span id="pm-specialty-badge" class="brand-tag">Department</span>
+              <span id="pm-acuity-badge" class="match-pill" style="background: var(--success);">Routine</span>
+              <span id="pm-score-pill" class="match-pill" style="display: none;">Score</span>
+            </div>
+            <div style="font-size: 0.68rem; color: var(--text-muted);" id="pm-meta-info">MTSamples Clinical
+              Transcription Database</div>
+          </div>
+          <button class="modal-close-btn" onclick="closePatientModal()" title="Close (Esc)">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Vitals & Extracted Clinical Entities Strip -->
+          <div class="modal-vitals-strip" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));">
+            <div class="vital-item">
+              <span class="vital-item-lbl">Blood Pressure (BP)</span>
+              <span class="vital-item-val" id="pm-bp">—</span>
+            </div>
+            <div class="vital-item">
+              <span class="vital-item-lbl">Heart Rate / Pulse</span>
+              <span class="vital-item-val" id="pm-hr">—</span>
+            </div>
+            <div class="vital-item">
+              <span class="vital-item-lbl">Temperature</span>
+              <span class="vital-item-val" id="pm-temp">—</span>
+            </div>
+            <div class="vital-item">
+              <span class="vital-item-lbl">Oxygen Sat (SpO2)</span>
+              <span class="vital-item-val" id="pm-spo2">—</span>
+            </div>
+            <div class="vital-item">
+              <span class="vital-item-lbl">Respiratory Rate (RR)</span>
+              <span class="vital-item-val" id="pm-rr">—</span>
+            </div>
+            <div class="vital-item">
+              <span class="vital-item-lbl">Prescriptions</span>
+              <span class="vital-item-val" id="pm-dosages">—</span>
+            </div>
+            <div class="vital-item">
+              <span class="vital-item-lbl">Demographics</span>
+              <span class="vital-item-val" id="pm-demographics">—</span>
+            </div>
+            <div class="vital-item" style="grid-column: 1 / -1;">
+              <span class="vital-item-lbl" style="color: #dc2626;">⚠️ Allergies & Alerts</span>
+              <span class="vital-item-val" id="pm-allergies" style="color: #dc2626; font-weight: 600;">—</span>
+            </div>
+          </div>
+
+          <!-- Full Transcription Narrative -->
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+              <span
+                style="font-size: 0.7rem; font-weight: 500; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.04em;">Full
+                Medical Transcription Narrative</span>
+              <span style="font-size: 0.68rem; color: var(--primary); font-weight: 500;" id="pm-word-count">0
+                words</span>
+            </div>
+            <div id="pm-narrative" class="clinical-narrative-box"></div>
+          </div>
+
+          <!-- In-Modal 3D Deep Mining Clinical Intelligence Section -->
+          <div id="pm-analysis-section" class="pm-analysis-section" style="display: none;">
+
+            <!-- In-Modal Loading State -->
+            <div id="pm-analysis-loading" class="pm-loading-box" style="display: none;">
+              <div class="spinner-ring" style="width: 32px; height: 32px; border-width: 3px;"></div>
+              <div style="text-align: center;">
+                <div style="font-weight: 600; font-size: 0.85rem; color: var(--primary);">Mining 3D Clinical
+                  Intelligence...</div>
+                <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 3px;">Extracting salient
+                  sentences, scoring clinical acuity risk, running ML specialty classifier, and highlighting 3D synapse.
+                </div>
+              </div>
+            </div>
+
+            <!-- In-Modal Analysis Results -->
+            <div id="pm-analysis-results" style="display: none; flex-direction: column; gap: 0.85rem;">
+
+              <!-- Analysis Banner / Section Header -->
+              <div class="pm-analysis-header">
+                <div>
+                  <div
+                    style="font-size: 0.86rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+                    <span>⚡ 3D Deep Mining Clinical Intelligence</span>
+                    <span class="brand-tag" style="font-size: 0.65rem; padding: 1px 6px;">TF-IDF Extractive NLP</span>
+                  </div>
+                  <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 2px;">
+                    Acuity Risk Triage • ML Specialty Inference • Salience Summarization • Entity Extraction
+                  </div>
+                </div>
+                <div class="pm-3d-synapse-pill" id="pm-3d-synapse-badge"
+                  title="Specialty node highlighted in background 3D universe">
+                  <span class="pm-pulse-dot"></span>
+                  <span>3D Node: <strong id="pm-3d-node-name">—</strong></span>
+                </div>
+              </div>
+
+              <!-- Key Quantitative Metrics Ribbon (4 Cards) -->
+              <div class="pm-metrics-grid">
+                <div class="pm-metric-card">
+                  <span class="pm-metric-lbl">📊 Compression Ratio</span>
+                  <span class="pm-metric-val" id="pm-metric-compression">—</span>
+                  <span class="pm-metric-sub" id="pm-metric-words-diff">—</span>
+                </div>
+                <div class="pm-metric-card">
+                  <span class="pm-metric-lbl">🎯 ROUGE-1 Salience</span>
+                  <span class="pm-metric-val" id="pm-metric-rouge1">—</span>
+                  <span class="pm-metric-sub" id="pm-metric-rouge-sub">Clinical Recall</span>
+                </div>
+                <div class="pm-metric-card">
+                  <span class="pm-metric-lbl">🚨 Clinical Acuity</span>
+                  <span class="pm-metric-val" id="pm-metric-acuity-level">—</span>
+                  <span class="pm-metric-sub" id="pm-metric-acuity-score">—</span>
+                </div>
+                <div class="pm-metric-card">
+                  <span class="pm-metric-lbl">🏥 AI Predicted Specialty</span>
+                  <span class="pm-metric-val" id="pm-metric-predicted-spec" style="font-size: 0.82rem;">—</span>
+                  <span class="pm-metric-sub" id="pm-metric-spec-prob">—</span>
+                </div>
+              </div>
+
+              <!-- Acuity Triage Alert Card -->
+              <div class="pm-subcard" id="pm-acuity-box">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <span
+                    style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.03em;">
+                    🚨 Clinical Acuity & Urgency Triage Findings
+                  </span>
+                  <span id="pm-acuity-badge-pill" class="match-pill" style="font-size: 0.65rem;">Risk Assessment</span>
+                </div>
+                <div id="pm-acuity-cues" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
+              </div>
+
+              <!-- Salience Extractive Medical Summary Card -->
+              <div class="pm-subcard"
+                style="background: var(--summary-box-bg); border-color: var(--summary-box-border); border-left: 4px solid var(--success);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <span
+                    style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase; color: var(--summary-box-text); letter-spacing: 0.03em;">
+                    🎯 Salience Extractive Medical Summary (Key Clinical Sentences)
+                  </span>
+                  <button class="pm-mini-btn" onclick="copyModalSummary()" title="Copy extracted summary">
+                    <span id="pm-copy-summary-text">📋 Copy Summary</span>
+                  </button>
+                </div>
+                <div id="pm-summary-output" class="pm-summary-text"></div>
+                <div id="pm-summary-stats"
+                  style="font-size: 0.68rem; color: var(--text-muted); margin-top: 6px; display: flex; gap: 12px; flex-wrap: wrap;">
+                </div>
+              </div>
+
+              <!-- AI Medical Specialty Classifier Probabilities -->
+              <div class="pm-subcard">
+                <div
+                  style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.03em; margin-bottom: 6px;">
+                  🏷️ Medical Specialty Probability Distribution (Naive Bayes Classifier)
+                </div>
+                <div id="pm-specialty-bars" class="pm-spec-bars-container"></div>
+              </div>
+
+              <!-- Full Named Entity Recognition (NER) & Measurements -->
+              <div class="pm-subcard">
+                <div
+                  style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.03em; margin-bottom: 6px;">
+                  🩺 Extracted Clinical Entities & Quantitative Vitals (NER)
+                </div>
+                <div class="pm-ner-grid">
+                  <div class="pm-ner-item">
+                    <span class="pm-ner-lbl">Blood Pressure</span>
+                    <span class="pm-ner-val" id="pm-ner-bp">—</span>
+                  </div>
+                  <div class="pm-ner-item">
+                    <span class="pm-ner-lbl">Heart Rate / Pulse</span>
+                    <span class="pm-ner-val" id="pm-ner-hr">—</span>
+                  </div>
+                  <div class="pm-ner-item">
+                    <span class="pm-ner-lbl">Body Temperature</span>
+                    <span class="pm-ner-val" id="pm-ner-temp">—</span>
+                  </div>
+                  <div class="pm-ner-item">
+                    <span class="pm-ner-lbl">Oxygen Sat (SpO2)</span>
+                    <span class="pm-ner-val" id="pm-ner-spo2">—</span>
+                  </div>
+                  <div class="pm-ner-item">
+                    <span class="pm-ner-lbl">Respiratory Rate (RR)</span>
+                    <span class="pm-ner-val" id="pm-ner-rr">—</span>
+                  </div>
+                  <div class="pm-ner-item">
+                    <span class="pm-ner-lbl">Weight / Body Mass</span>
+                    <span class="pm-ner-val" id="pm-ner-weight">—</span>
+                  </div>
+                  <div class="pm-ner-item">
+                    <span class="pm-ner-lbl">Prescriptions & Doses</span>
+                    <span class="pm-ner-val" id="pm-ner-dosages">—</span>
+                  </div>
+                  <div class="pm-ner-item">
+                    <span class="pm-ner-lbl">Patient Demographics</span>
+                    <span class="pm-ner-val" id="pm-ner-demographics">—</span>
+                  </div>
+                  <div class="pm-ner-item" style="grid-column: 1 / -1;">
+                    <span class="pm-ner-lbl">⚠️ Allergies & Alerts</span>
+                    <span class="pm-ner-val" id="pm-ner-allergies" style="color: #dc2626; font-weight: 600;">—</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- TF-IDF Semantic Salience Keywords -->
+              <div class="pm-subcard">
+                <div
+                  style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.03em; margin-bottom: 6px;">
+                  🧬 Top Semantic Clinical Keywords & TF-IDF Vector Salience
+                </div>
+                <div id="pm-keywords-cloud" class="tag-cloud"></div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button class="action-btn" style="width: auto; padding: 6px 12px; margin-top: 0; background: #64748b;"
+              onclick="copyPatientNarrative()">
+              <span id="pm-copy-btn-text">📋 Copy Clinical Text</span>
+            </button>
+            <button id="pm-footer-copy-summary" class="action-btn"
+              style="width: auto; padding: 6px 12px; margin-top: 0; background: var(--success); display: none;"
+              onclick="copyModalSummary()">
+              <span id="pm-footer-copy-summary-text">📋 Copy Summary</span>
+            </button>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button id="pm-analyze-btn" class="action-btn" style="width: auto; padding: 6px 14px; margin-top: 0;"
+              onclick="analyzeInModal()">
+              <span>⚡ Analyze </span>
+            </button>
+            <button id="pm-open-main-btn" class="action-btn"
+              style="width: auto; padding: 6px 12px; margin-top: 0; background: transparent; color: var(--primary); border: 1px solid var(--primary); box-shadow: none;"
+              onclick="loadModalPatientToMining()" title="Export note to Main Deep Mining tab workspace">
+              <span>↗️ Open in Main Tab</span>
+            </button>
+            <button class="action-btn"
+              style="width: auto; padding: 6px 12px; margin-top: 0; background: transparent; color: var(--text-muted); border: 1px solid var(--card-border); box-shadow: none;"
+              onclick="closePatientModal()">
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <main class="main-workspace" id="main-workspace-el">
+
+      <!-- Left Controls Panel -->
+      <aside class="glass-panel" id="left-sidebar-panel">
+
+        <!-- Tab 1 Controls: Deep Mining -->
+        <div id="ctrl-analysis" class="scroll-body">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span>📄 Clinical Case Input</span>
+              <span class="panel-badge">4,999 Corpus</span>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+            <div class="form-group">
+              <label class="form-label">Data Source</label>
+              <select id="source-mode" class="glass-select" onchange="toggleSourceMode()">
+                <option value="dataset">MTSamples (4,999)</option>
+                <option value="custom">Custom Narrative</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Summary Length</label>
+              <select id="length-select" class="glass-select" onchange="executeAnalysis()">
+                <option value="3">3 Sentences</option>
+                <option value="4" selected>4 Sentences</option>
+                <option value="5">5 Sentences</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="dataset-pickers" style="display: flex; flex-direction: column; gap: 4px;">
+            <div class="form-group">
+              <label class="form-label">1. Medical Specialty</label>
+              <select id="specialty-select" class="glass-select" onchange="loadRecordsForSpecialty()"></select>
+            </div>
+            <div class="form-group">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label class="form-label">2. Patient Case Record</label>
+                <button type="button" class="hud-btn" onclick="viewSelectedPickerRecord()"
+                  style="padding: 1px 7px; font-size: 0.64rem; height: 20px; line-height: 18px;">👁️ View Case</button>
+              </div>
+              <select id="record-select" class="glass-select" onchange="updateNoteFromRecord()"></select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+              <label class="form-label" style="margin-bottom: 0;">Clinical Narrative</label>
+              <span id="narrative-word-badge" style="font-size: 0.68rem; color: var(--primary); font-weight: 500;"></span>
+            </div>
+            <!-- File Drag and Drop Zone -->
+            <div class="file-drop-zone" id="clinical-drop-zone" onclick="document.getElementById('file-upload-input').click()" title="Click or drag and drop a medical note (PDF or TXT)">
+              <input type="file" id="file-upload-input" accept=".pdf,.txt" style="display: none;" onchange="handleFileUpload(event)">
+              <span style="font-size: 0.95rem; line-height: 1;">📂</span>
+              <span style="font-size: 0.74rem; font-weight: 600; color: var(--primary);">Drop Clinical File (PDF / TXT)</span>
+              <span style="font-size: 0.66rem; color: var(--text-muted);">or browse</span>
+            </div>
+            <textarea id="clinical-input" class="glass-textarea"
+              placeholder="Paste doctor's note or medical report..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Summarization Algorithm</label>
+            <select id="algo-select" class="glass-select" onchange="executeAnalysis()">
+              <option value="TF-IDF Extractive" selected>TF-IDF Salience (Length-Normalized)</option>
+              <option value="TextRank Graph (PageRank)">TextRank Graph (PageRank)</option>
+              <option value="Lead-3 / Lead-N Baseline">Lead-N Baseline</option>
+            </select>
+          </div>
+
+          <button class="action-btn" onclick="executeAnalysis()">
+            <span>⚡ Run 3D Deep Mining</span>
+          </button>
+        </div>
+
+        <!-- Tab 2 Controls: IR Search -->
+        <div id="ctrl-ir-search" class="scroll-body" style="display: none;">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span>🔎 Vector IR Engine</span>
+              <span class="panel-badge">Cosine Rank</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Filter by Medical Specialty (Optional)</label>
+            <select id="ir-specialty-filter" class="glass-select">
+              <option value="">All Medical Specialties (Corpus)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Symptoms / Clinical Query</label>
+            <input type="text" id="ir-query" class="glass-input" value="acute chest pain hypertension dyspnea"
+              placeholder="e.g. coronary artery bypass...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Top Results Count</label>
+            <select id="ir-top-k" class="glass-select">
+              <option value="4">4 Cases</option>
+              <option value="6" selected>6 Cases</option>
+              <option value="10">10 Cases</option>
+            </select>
+          </div>
+          <button class="action-btn" onclick="executeIRSearch()">
+            <span>🔍 Query 4,999 Records</span>
+          </button>
+        </div>
+
+        <!-- Tab 3 Controls: ML Classifier -->
+        <div id="ctrl-ml-classify" class="scroll-body" style="display: none;">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span>🏷️ Department Classifier</span>
+              <span class="panel-badge">Naive Bayes</span>
+            </div>
+          </div>
+
+          <!-- Dataset Filter Controls (Medical Specialty, Case Records) -->
+          <div class="form-group">
+            <label class="form-label">Data Source Mode</label>
+            <select id="ml-source-mode" class="glass-select" onchange="toggleMLSourceMode()">
+              <option value="dataset">MTSamples Dataset (4,999 records)</option>
+              <option value="custom">Custom Clinical Text</option>
+            </select>
+          </div>
+
+          <div id="ml-dataset-pickers"
+            style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 4px;">
+            <div class="form-group">
+              <label class="form-label">1. Medical Specialty</label>
+              <select id="ml-specialty-select" class="glass-select" onchange="loadRecordsForMLSpecialty()"></select>
+            </div>
+            <div class="form-group">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label class="form-label">2. Case Records</label>
+                <button type="button" class="hud-btn" onclick="viewSelectedMLRecord()"
+                  style="padding: 1px 7px; font-size: 0.64rem; height: 20px; line-height: 18px;">👁️ View Case</button>
+              </div>
+              <select id="ml-record-select" class="glass-select" onchange="updateMLTextFromRecord()"></select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+              <label class="form-label" style="margin-bottom: 0;">Prescription / Clinical Text</label>
+              <span id="ml-case-meta" style="font-size: 0.68rem; color: var(--primary); font-weight: 500;"></span>
+            </div>
+            <textarea id="ml-input" class="glass-textarea" style="height: 56px;"
+              placeholder="Paste unlabelled clinical notes...">Patient underwent a right knee arthroscopy with partial medial meniscectomy. Full weight bearing tolerated with crutches.</textarea>
+          </div>
+          <button class="action-btn" onclick="executeMLClassify()">
+            <span>🤖 Predict Department</span>
+          </button>
+        </div>
+
+        <!-- Tab 5 Controls: Batch Summarization -->
+        <div id="ctrl-batch" class="scroll-body" style="display: none;">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span>⚡ Batch Engine</span>
+              <span class="panel-badge">Multi-Doc</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Target Specialty</label>
+            <select id="batch-specialty-select" class="glass-select"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Records to Process</label>
+            <select id="batch-count" class="glass-select">
+              <option value="3" selected>3 Records</option>
+              <option value="5">5 Records</option>
+              <option value="8">8 Records</option>
+            </select>
+          </div>
+          <button id="run-batch-btn" class="action-btn" onclick="executeBatch()">
+            <span>🚀 Run Batch Processing</span>
+          </button>
+        </div>
+
+        <!-- 3D HUD Integrated in Bottom of Sidebar -->
+        <div class="hud-controls-bar">
+          <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700;">3D UNIVERSE:</span>
+          <div style="display: flex; gap: 6px;">
+            <button class="hud-btn" onclick="toggleAutoRotate()">Rotate: <span id="rotate-status">ON</span></button>
+            <button class="hud-btn" onclick="reset3DCamera()">Reset</button>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- Right Interactive Content Area -->
+      <section class="content-area">
+
+        <!-- Live Metrics Strip (Balanced 5 Columns) -->
+        <div class="metrics-strip">
+          <div class="metric-card">
+            <div class="metric-label">Total Records</div>
+            <div class="metric-value" id="metric-records">4,999</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Specialties</div>
+            <div class="metric-value" id="metric-specialties">40</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Compression</div>
+            <div class="metric-value" id="metric-compression">78.4%</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">ROUGE-1 Score</div>
+            <div class="metric-value" id="metric-rouge" style="color: var(--primary);">54.2%</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Clinical Acuity</div>
+            <div class="metric-value" id="metric-acuity" style="color: var(--success); font-size: 1.15rem;">Routine
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 1: Deep Mining Output -->
+        <div id="view-analysis" class="module-view active-view">
+          <div class="result-card" id="card-summary" style="position: relative; display: flex; flex-direction: column; gap: 0.85rem;">
+            <!-- Animated Processing Overlay -->
+            <div class="processing-overlay" id="loading-summary">
+              <div class="spinner-ring"></div>
+              <div class="loading-pulse-text">Mining TF-IDF Matrix & Acuity Scoring...</div>
+            </div>
+
+            <!-- Deep Mining Clinical Intelligence Main Header -->
+            <div class="pm-analysis-header">
+              <div>
+                <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                  <span>⚡ 3D Deep Mining Clinical Intelligence</span>
+                  <span id="analysis-method-badge" class="brand-tag" style="font-size: 0.65rem; padding: 2px 7px;">TF-IDF Extractive NLP</span>
+                </div>
+                <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 3px;">
+                  Salience Extractive Summarization • Acuity Risk Triage • ML Specialty Inference • Entity Recognition
+                </div>
+              </div>
+              <div class="pm-3d-synapse-pill" id="analysis-3d-synapse-badge" title="Specialty node highlighted in background 3D universe">
+                <span class="pm-pulse-dot"></span>
+                <span>3D Node: <strong id="analysis-3d-node-name">Surgery</strong></span>
+              </div>
+            </div>
+
+            <!-- Key Quantitative Metrics Ribbon (4 Cards) -->
+            <div class="pm-metrics-grid">
+              <div class="pm-metric-card">
+                <span class="pm-metric-lbl">📊 Compression Ratio</span>
+                <span class="pm-metric-val" id="dm-metric-compression">78.4%</span>
+                <span class="pm-metric-sub" id="dm-metric-words-diff">Text reduction</span>
+              </div>
+              <div class="pm-metric-card">
+                <span class="pm-metric-lbl">🎯 ROUGE-1 Salience</span>
+                <span class="pm-metric-val" id="dm-metric-rouge1">54.2%</span>
+                <span class="pm-metric-sub" id="dm-metric-rouge-sub">Clinical Recall</span>
+              </div>
+              <div class="pm-metric-card">
+                <span class="pm-metric-lbl">🚨 Clinical Acuity</span>
+                <span class="pm-metric-val" id="dm-metric-acuity-level" style="color: var(--success);">Routine</span>
+                <span class="pm-metric-sub" id="dm-metric-acuity-score">Risk Score: 10/100</span>
+              </div>
+              <div class="pm-metric-card">
+                <span class="pm-metric-lbl">🏥 AI Predicted Specialty</span>
+                <span class="pm-metric-val" id="dm-metric-predicted-spec" style="font-size: 0.85rem;">Surgery</span>
+                <span class="pm-metric-sub" id="dm-metric-spec-prob">ML Confidence</span>
+              </div>
+            </div>
+
+            <!-- Clinical Acuity & Urgency Triage Findings Card -->
+            <div class="pm-subcard" id="dm-acuity-box">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-size: 0.74rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.03em;">
+                  🚨 Clinical Acuity & Urgency Triage Findings
+                </span>
+                <span id="dm-acuity-badge-pill" class="match-pill" style="font-size: 0.65rem; background: var(--success);">Routine / Low Acuity</span>
+              </div>
+              <div id="dm-acuity-cues" style="display: flex; flex-wrap: wrap; gap: 5px;">
+                <span style="font-size: 0.74rem; color: var(--success); font-weight: 500;">✅ Stable Clinical Presentation: No acute emergency triggers or high-risk keywords detected in narrative.</span>
+              </div>
+            </div>
+
+            <!-- Salience Extractive Medical Summary Card -->
+            <div class="pm-subcard" style="background: var(--summary-box-bg); border-color: var(--summary-box-border); border-left: 4px solid var(--success);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-size: 0.74rem; font-weight: 600; text-transform: uppercase; color: var(--summary-box-text); letter-spacing: 0.03em;">
+                  🎯 Salience Extractive Medical Summary (Key Clinical Sentences)
+                </span>
+                <div style="display: flex; gap: 5px; align-items: center;">
+                  <button class="pm-mini-btn" onclick="copyDeepMiningSummary()" title="Copy extracted summary">
+                    <span id="dm-copy-summary-text">📋 Copy</span>
+                  </button>
+                  <button class="pm-mini-btn" onclick="downloadDeepMiningJSON()" title="Download complete clinical intelligence report as JSON">
+                    <span>📥 JSON</span>
+                  </button>
+                  <button class="pm-mini-btn" onclick="window.print()" title="Print or save clinical intelligence report as PDF">
+                    <span>🖨️ Print</span>
+                  </button>
+                </div>
+              </div>
+              <div id="summary-output" class="pm-summary-text">
+                Click <strong>"Run 3D Deep Mining"</strong> to extract TF-IDF ranked sentences, medical entities, and risk scoring.
+              </div>
+              <div id="dm-summary-stats" style="font-size: 0.68rem; color: var(--text-muted); margin-top: 6px; display: flex; gap: 12px; flex-wrap: wrap;"></div>
+            </div>
+
+            <!-- Medical Specialty Probability Distribution -->
+            <div class="pm-subcard">
+              <div style="font-size: 0.74rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.03em; margin-bottom: 6px;">
+                🏷️ Medical Specialty Probability Distribution (Naive Bayes Classifier)
+              </div>
+              <div id="dm-specialty-bars" class="pm-spec-bars-container"></div>
+            </div>
+
+            <!-- Medical Entities (NER) & Measurements -->
+            <div class="pm-subcard">
+              <div style="font-size: 0.74rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.03em; margin-bottom: 6px;">
+                🩺 Extracted Clinical Entities & Quantitative Vitals (NER)
+              </div>
+              <div class="pm-ner-grid">
+                <div class="pm-ner-item">
+                  <span class="pm-ner-lbl">Blood Pressure</span>
+                  <span class="pm-ner-val" id="ner-bp">—</span>
+                </div>
+                <div class="pm-ner-item">
+                  <span class="pm-ner-lbl">Heart Rate / Pulse</span>
+                  <span class="pm-ner-val" id="ner-hr">—</span>
+                </div>
+                <div class="pm-ner-item">
+                  <span class="pm-ner-lbl">Body Temperature</span>
+                  <span class="pm-ner-val" id="ner-temp">—</span>
+                </div>
+                <div class="pm-ner-item">
+                  <span class="pm-ner-lbl">Oxygen Sat (SpO2)</span>
+                  <span class="pm-ner-val" id="ner-spo2">—</span>
+                </div>
+                <div class="pm-ner-item">
+                  <span class="pm-ner-lbl">Respiratory Rate (RR)</span>
+                  <span class="pm-ner-val" id="ner-rr">—</span>
+                </div>
+                <div class="pm-ner-item">
+                  <span class="pm-ner-lbl">Weight / Body Mass</span>
+                  <span class="pm-ner-val" id="ner-weight">—</span>
+                </div>
+                <div class="pm-ner-item">
+                  <span class="pm-ner-lbl">Prescriptions & Doses</span>
+                  <span class="pm-ner-val" id="ner-dosages">—</span>
+                </div>
+                <div class="pm-ner-item">
+                  <span class="pm-ner-lbl">Patient Demographics</span>
+                  <span class="pm-ner-val" id="ner-demographics">—</span>
+                </div>
+                <div class="pm-ner-item" style="grid-column: 1 / -1;">
+                  <span class="pm-ner-lbl">⚠️ Allergies & Adverse Drug Reactions</span>
+                  <span class="pm-ner-val" id="ner-allergies" style="color: #dc2626; font-weight: 600;">—</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Top Semantic Clinical Keywords -->
+            <div class="pm-subcard">
+              <div style="font-size: 0.74rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.03em; margin-bottom: 6px;">
+                🧬 Top Semantic Clinical Keywords & TF-IDF Vector Salience
+              </div>
+              <div id="keywords-cloud" class="tag-cloud"></div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- VIEW 2: IR Search Output -->
+        <div id="view-ir-search" class="module-view">
+          <div class="result-card" id="card-ir">
+            <!-- Animated Processing Overlay -->
+            <div class="processing-overlay" id="loading-ir">
+              <div class="spinner-ring"></div>
+              <div class="loading-pulse-text">Searching 4,999 Notes via Cosine Similarity...</div>
+            </div>
+
+            <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.8rem; color: var(--text-main);">🔎 Cosine
+              Similarity Search Results</h3>
+            <div id="ir-results-container">
+              <div style="color: var(--text-muted); font-size: 0.88rem;">Submit a clinical query to retrieve the most
+                relevant patient records.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 3: ML Classifier Output -->
+        <div id="view-ml-classify" class="module-view">
+          <div class="result-card" id="card-ml">
+            <!-- Animated Processing Overlay -->
+            <div class="processing-overlay" id="loading-ml">
+              <div class="spinner-ring"></div>
+              <div class="loading-pulse-text">Evaluating Naive Bayes Probability Distribution...</div>
+            </div>
+
+            <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.8rem; color: var(--text-main);">
+              🎯 Predicted Department: <span id="ml-prediction-text" style="color: var(--primary);">—</span>
+            </h3>
+            <div style="height: 250px; position: relative;">
+              <canvas id="mlChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 4: Big Data Analytics -->
+        <div id="view-analytics" class="module-view">
+          <div class="result-card" style="display: flex; flex-direction: column; gap: 1rem;">
+            <div>
+              <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 3px;">
+                📊 Corpus-Wide Clinical Intelligence & Big Data Analytics
+              </h3>
+              <div style="font-size: 0.74rem; color: var(--text-muted);">
+                Multimodal analytics across all 4,966 patient transcription records and 40 medical specialties.
+              </div>
+            </div>
+
+            <!-- Analytics 4 KPI Ribbon -->
+            <div class="pm-metrics-grid" style="margin-bottom: 0;">
+              <div class="pm-metric-card">
+                <span class="pm-metric-lbl">📁 Corpus Records</span>
+                <span class="pm-metric-val" id="analytics-total-records" style="color: var(--primary);">4,966</span>
+                <span class="pm-metric-sub">Transcriptions analyzed</span>
+              </div>
+              <div class="pm-metric-card">
+                <span class="pm-metric-lbl">📖 Total Corpus Words</span>
+                <span class="pm-metric-val" id="analytics-total-words" style="color: #6366f1;">2.31M Words</span>
+                <span class="pm-metric-sub">Total lexical tokens</span>
+              </div>
+              <div class="pm-metric-card">
+                <span class="pm-metric-lbl">📝 Average Note Length</span>
+                <span class="pm-metric-val" id="analytics-avg-words" style="color: var(--success);">465 Words</span>
+                <span class="pm-metric-sub">Mean note length</span>
+              </div>
+              <div class="pm-metric-card">
+                <span class="pm-metric-lbl">🏥 Medical Specialties</span>
+                <span class="pm-metric-val" id="analytics-total-specialties" style="color: #0284c7;">40</span>
+                <span class="pm-metric-sub">Clinical departments</span>
+              </div>
+            </div>
+
+            <!-- Two-Chart Comparison Layout -->
+            <div style="display: grid; grid-template-columns: 1.6fr 1.1fr; gap: 1rem; min-height: 360px;">
+              <div class="pm-subcard" style="display: flex; flex-direction: column;">
+                <div style="font-size: 0.76rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px;">
+                  🏷️ Specialty Record Volume Distribution (Top Departments)
+                </div>
+                <div style="flex: 1; min-height: 300px; position: relative;">
+                  <canvas id="analyticsChart"></canvas>
+                </div>
+              </div>
+              <div class="pm-subcard" style="display: flex; flex-direction: column;">
+                <div style="font-size: 0.76rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px;">
+                  🚨 Corpus Clinical Acuity & Triage Risk Distribution
+                </div>
+                <div style="flex: 1; min-height: 300px; position: relative;">
+                  <canvas id="acuityDoughnutChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 5: Batch Processing Output -->
+        <div id="view-batch" class="module-view">
+          <div class="result-card" id="card-batch">
+            <!-- Animated Processing Overlay -->
+            <div class="processing-overlay" id="loading-batch">
+              <div class="spinner-ring"></div>
+              <div class="loading-pulse-text">Batch Mining Department Clinical Notes...</div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; flex-wrap: wrap; gap: 8px;">
+              <div>
+                <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 2px;">⚡ Batch Clinical Summaries</h3>
+                <div style="font-size: 0.72rem; color: var(--text-muted);">Parallel summarization and acuity risk scoring across selected department notes.</div>
+              </div>
+              <button id="batch-export-csv-btn" class="pm-mini-btn" style="padding: 5px 12px; font-size: 0.74rem;" onclick="exportBatchCSV()" title="Export all batch results to CSV spreadsheet">
+                <span>📥 Export All to CSV</span>
+              </button>
+            </div>
+            <div id="batch-results-container">
+              <div style="color: var(--text-muted); font-size: 0.88rem;">Choose a specialty and click "Run Batch Processing".</div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <!-- Global Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script>
+    // ══════════════════════════════════════════════════════════════
+    // 1. THEME MANAGEMENT (Light / Dark)
+    // ══════════════════════════════════════════════════════════════
+    let currentTheme = localStorage.getItem('medimine-theme') || 'light';
+    if (!localStorage.getItem('medimine-theme')) {
+      currentTheme = 'light';
+      localStorage.setItem('medimine-theme', 'light');
+    }
+    document.documentElement.setAttribute('data-theme', currentTheme);
+
+    function updateThemeUI() {
+      const isDark = currentTheme === 'dark';
+      const tIcon = document.getElementById('theme-icon');
+      if (tIcon) tIcon.textContent = isDark ? '☀️' : '🌙';
+      const tLbl = document.getElementById('theme-label');
+      if (tLbl) tLbl.textContent = isDark ? 'Light' : 'Dark';
+      document.documentElement.setAttribute('data-theme', currentTheme);
+
+      // Update 3D canvas background and particles
+      if (scene) {
+        scene.fog.color.setHex(isDark ? 0x030712 : 0xf8fafc);
+        renderer.setClearColor(isDark ? 0x030712 : 0xf8fafc, 1);
+        if (pMaterial) {
+          pMaterial.color.setHex(isDark ? 0x38bdf8 : 0x0284c7);
+        }
+      }
+
+      // Re-render active charts with updated theme colors
+      if (analyticsChartInstance) {
+        analyticsChartInstance.options.scales.x.ticks.color = isDark ? '#94a3b8' : '#64748b';
+        analyticsChartInstance.options.scales.y.ticks.color = isDark ? '#94a3b8' : '#64748b';
+        analyticsChartInstance.options.scales.y.grid.color = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+        analyticsChartInstance.update();
+      }
+      if (mlChartInstance) {
+        mlChartInstance.options.scales.x.ticks.color = isDark ? '#94a3b8' : '#64748b';
+        mlChartInstance.options.scales.y.ticks.color = isDark ? '#94a3b8' : '#64748b';
+        mlChartInstance.options.scales.y.grid.color = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+        mlChartInstance.update();
+      }
+      if (acuityDoughnutChartInstance) {
+        acuityDoughnutChartInstance.options.plugins.legend.labels.color = isDark ? '#94a3b8' : '#475569';
+        acuityDoughnutChartInstance.data.datasets[0].borderColor = isDark ? '#0f172a' : '#ffffff';
+        acuityDoughnutChartInstance.update();
+      }
+    }
+
+    function toggleTheme() {
+      currentTheme = (currentTheme === 'light') ? 'dark' : 'light';
+      localStorage.setItem('medimine-theme', currentTheme);
+      updateThemeUI();
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // 2. THREE.JS 3D SCENE & KNOWLEDGE GRAPH ENGINE
+    // ══════════════════════════════════════════════════════════════
+    const canvas = document.getElementById('webgl-canvas');
+    const scene = new THREE.Scene();
+    const isInitialDark = currentTheme === 'dark';
+    scene.fog = new THREE.FogExp2(isInitialDark ? 0x030712 : 0xf0f4f9, 0.002);
+
+    const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 1, 1500);
+    camera.position.set(0, 30, 200);
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(isInitialDark ? 0x030712 : 0xf0f4f9, 1);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.45;
+    controls.minDistance = 60;
+    controls.maxDistance = 450;
+
+    // Lights
+    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+    const light1 = new THREE.PointLight(0x0284c7, 3, 500);
+    light1.position.set(120, 150, 100);
+    scene.add(light1);
+
+    const light2 = new THREE.PointLight(0x818cf8, 2, 500);
+    light2.position.set(-120, -100, -100);
+    scene.add(light2);
+
+    // Dynamic Starfield / Synapse Constellation
+    const particleCount = 200;
+    const pGeo = new THREE.BufferGeometry();
+    const pPositions = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount * 3; i++) {
+      pPositions[i] = (Math.random() - 0.5) * 800;
+    }
+    pGeo.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
+    const pMaterial = new THREE.PointsMaterial({
+      color: isInitialDark ? 0x38bdf8 : 0x0284c7,
+      size: 3.5,
+      transparent: true,
+      opacity: 0.5
+    });
+    scene.add(new THREE.Points(pGeo, pMaterial));
+
+    // Dynamic Nodes & Edges
+    const nodeGroup = new THREE.Group();
+    scene.add(nodeGroup);
+    let nodeMeshes = [];
+
+    const CAT_COLORS = {
+      'surgical': 0xf43f5e,
+      'diagnostic': 0x06b6d4,
+      'clinical': 0x0284c7
+    };
+
+    function fibonacciSphere(n, radius) {
+      const pts = [];
+      const phi = Math.PI * (3 - Math.sqrt(5));
+      for (let i = 0; i < n; i++) {
+        const y = 1 - (i / (n - 1)) * 2;
+        const r = Math.sqrt(1 - y * y);
+        const theta = phi * i;
+        pts.push(new THREE.Vector3(Math.cos(theta) * r * radius, y * radius, Math.sin(theta) * r * radius));
+      }
+      return pts;
+    }
+
+    function build3DKnowledgeGraph(specialties) {
+      while (nodeGroup.children.length > 0) {
+        nodeGroup.remove(nodeGroup.children[0]);
+      }
+      nodeMeshes = [];
+
+      const count = specialties.length;
+      const positions = fibonacciSphere(count, 95);
+      const maxCount = Math.max(...specialties.map(s => s.count), 1);
+
+      specialties.forEach((spec, i) => {
+        const t = spec.count / maxCount;
+        const size = 3 + t * 9;
+
+        let cat = 'clinical';
+        if (spec.name.toLowerCase().includes('surg')) cat = 'surgical';
+        else if (spec.name.toLowerCase().includes('radiology') || spec.name.toLowerCase().includes('summary')) cat = 'diagnostic';
+
+        const col = new THREE.Color(CAT_COLORS[cat] || 0x0284c7);
+
+        const geo = new THREE.SphereGeometry(size, 32, 32);
+        const mat = new THREE.MeshPhongMaterial({
+          color: col,
+          emissive: col.clone().multiplyScalar(0.25),
+          shininess: 90,
+          transparent: true,
+          opacity: 0.92
+        });
+
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.copy(positions[i]);
+        mesh.userData = { spec, baseColor: col.clone(), size };
+
+        nodeGroup.add(mesh);
+        nodeMeshes.push(mesh);
+
+        // Ring aura
+        const ring = new THREE.Mesh(
+          new THREE.RingGeometry(size + 0.4, size + 1.6, 32),
+          new THREE.MeshBasicMaterial({ color: col, side: THREE.DoubleSide, transparent: true, opacity: 0.25 })
+        );
+        mesh.add(ring);
+      });
+
+      // Connecting edges
+      for (let i = 0; i < count; i++) {
+        for (let j = i + 1; j < count; j++) {
+          if (positions[i].distanceTo(positions[j]) < 65) {
+            const geo = new THREE.BufferGeometry().setFromPoints([positions[i], positions[j]]);
+            const mat = new THREE.LineBasicMaterial({ color: 0x0284c7, transparent: true, opacity: 0.16 });
+            nodeGroup.add(new THREE.Line(geo, mat));
+          }
+        }
+      }
+    }
+
+    // Hover Raycaster
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2(-9999, -9999);
+    const tooltip = document.getElementById('three-tooltip');
+    let hoveredMesh = null;
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      tooltip.style.left = (e.clientX + 16) + 'px';
+      tooltip.style.top = (e.clientY - 10) + 'px';
+    });
+
+    const clock = new THREE.Clock();
+    function animate() {
+      requestAnimationFrame(animate);
+      const time = clock.getElapsedTime();
+
+      // Pulsing nodes
+      nodeMeshes.forEach((m, idx) => {
+        const pulse = 1 + 0.05 * Math.sin(time * 1.6 + idx * 0.4);
+        m.scale.setScalar(pulse);
+      });
+
+      // Raycast hover check
+      raycaster.setFromCamera(mouse, camera);
+      const hits = raycaster.intersectObjects(nodeMeshes);
+
+      if (hits.length > 0) {
+        const hit = hits[0].object;
+        if (hit !== hoveredMesh) {
+          if (hoveredMesh) hoveredMesh.material.emissiveIntensity = 0.25;
+          hoveredMesh = hit;
+          hoveredMesh.material.emissive.set(0xffffff);
+          hoveredMesh.material.emissiveIntensity = 0.8;
+
+          const spec = hit.userData.spec;
+          document.getElementById('tt-name').textContent = spec.name;
+          document.getElementById('tt-count').textContent = `${spec.count.toLocaleString()} records in dataset`;
+          document.getElementById('tt-bar').style.width = '75%';
+          tooltip.style.display = 'block';
+          controls.autoRotate = false;
+        }
+      } else {
+        if (hoveredMesh) {
+          hoveredMesh.material.emissiveIntensity = 0.25;
+          hoveredMesh = null;
+          tooltip.style.display = 'none';
+          controls.autoRotate = true;
+        }
+      }
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    function toggleAutoRotate() {
+      controls.autoRotate = !controls.autoRotate;
+      document.getElementById('rotate-status').textContent = controls.autoRotate ? 'ON' : 'OFF';
+    }
+
+    function reset3DCamera() {
+      camera.position.set(0, 30, 200);
+      controls.target.set(0, 0, 0);
+    }
+
+    // ── 3D Sphere Interactive Raycast Click Selection ────────────
+    let isPointerDragging = false;
+    let pointerDownPos = { x: 0, y: 0 };
+
+    window.addEventListener('pointerdown', (e) => {
+      pointerDownPos = { x: e.clientX, y: e.clientY };
+      isPointerDragging = false;
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y) > 6) {
+        isPointerDragging = true;
+      }
+    });
+
+    window.addEventListener('pointerup', (e) => {
+      if (isPointerDragging) return;
+      if (e.target.closest('#left-sidebar-panel, #main-workspace-el, #app-header, #patient-modal-backdrop, .interactive')) return;
+
+      const clickMouse = new THREE.Vector2(
+        (e.clientX / window.innerWidth) * 2 - 1,
+        -(e.clientY / window.innerHeight) * 2 + 1
+      );
+      raycaster.setFromCamera(clickMouse, camera);
+      const hits = raycaster.intersectObjects(nodeMeshes);
+      if (hits.length > 0) {
+        const hit = hits[0].object;
+        if (hit.userData && hit.userData.spec) {
+          selectSpecialtyFrom3D(hit.userData.spec.name);
+        }
+      }
+    });
+
+    function selectSpecialtyFrom3D(specName) {
+      if (!specName) return;
+      spotlight3DSpecialty(specName);
+
+      const specSelect = document.getElementById('specialty-select');
+      if (specSelect) {
+        for (let i = 0; i < specSelect.options.length; i++) {
+          if (specSelect.options[i].value.toLowerCase() === specName.toLowerCase()) {
+            specSelect.selectedIndex = i;
+            loadRecordsForSpecialty();
+            break;
+          }
+        }
+      }
+
+      const mlSelect = document.getElementById('ml-specialty-select');
+      if (mlSelect) {
+        for (let i = 0; i < mlSelect.options.length; i++) {
+          if (mlSelect.options[i].value.toLowerCase() === specName.toLowerCase()) {
+            mlSelect.selectedIndex = i;
+            loadRecordsForMLSpecialty();
+            break;
+          }
+        }
+      }
+
+      const irFilter = document.getElementById('ir-specialty-filter');
+      if (irFilter) {
+        for (let i = 0; i < irFilter.options.length; i++) {
+          if (irFilter.options[i].value.toLowerCase() === specName.toLowerCase()) {
+            irFilter.selectedIndex = i;
+            break;
+          }
+        }
+      }
+
+      const batchSelect = document.getElementById('batch-specialty-select');
+      if (batchSelect) {
+        for (let i = 0; i < batchSelect.options.length; i++) {
+          if (batchSelect.options[i].value.toLowerCase() === specName.toLowerCase()) {
+            batchSelect.selectedIndex = i;
+            break;
+          }
+        }
+      }
+
+      showToast(`🌐 3D Synapse Focused: <strong>${specName}</strong>`, 'info');
+    }
+
+    // ── Global Toast Notification Helper ────────────────────────
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+      const toast = document.createElement('div');
+      toast.className = `toast-msg toast-${type}`;
+      toast.innerHTML = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.add('hiding');
+        setTimeout(() => { toast.remove(); }, 350);
+      }, 3500);
+    }
+
+    // ── File Upload & Drop Zone Integration ─────────────────────
+    function initFileDropZone() {
+      const dropZone = document.getElementById('clinical-drop-zone');
+      if (!dropZone) return;
+
+      ['dragenter', 'dragover'].forEach(name => {
+        dropZone.addEventListener(name, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.add('drag-over');
+        }, false);
+      });
+
+      ['dragleave', 'drop'].forEach(name => {
+        dropZone.addEventListener(name, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.remove('drag-over');
+        }, false);
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          handleFileUpload(e.dataTransfer.files[0]);
+        }
+      });
+    }
+
+    async function handleFileUpload(eventOrFile) {
+      let file = null;
+      if (eventOrFile instanceof File) {
+        file = eventOrFile;
+      } else if (eventOrFile && eventOrFile.target && eventOrFile.target.files) {
+        file = eventOrFile.target.files[0];
+      } else if (eventOrFile && eventOrFile.dataTransfer && eventOrFile.dataTransfer.files) {
+        file = eventOrFile.dataTransfer.files[0];
+      }
+      if (!file) return;
+
+      const dropZone = document.getElementById('clinical-drop-zone');
+      const origHtml = dropZone ? dropZone.innerHTML : '';
+      if (dropZone) {
+        dropZone.innerHTML = `
+          <div class="spinner-ring" style="width:14px; height:14px; margin:0 4px 0 0; border-width:2px; display:inline-block; vertical-align:middle;"></div>
+          <span style="font-size: 0.7rem; font-weight: 600; color: var(--primary);">Extracting ${file.name}...</span>
+        `;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+          const modeSelect = document.getElementById('source-mode');
+          if (modeSelect) {
+            modeSelect.value = 'custom';
+            toggleSourceMode();
+          }
+          const input = document.getElementById('clinical-input');
+          if (input) {
+            input.value = data.text;
+          }
+          showToast(`✅ Successfully extracted <strong>${data.filename}</strong> (${data.word_count} words)`, 'success');
+          await executeAnalysis();
+        } else {
+          showToast(`⚠️ Upload error: ${data.message}`, 'danger');
+        }
+      } catch (err) {
+        console.error("Upload Error:", err);
+        showToast(`⚠️ Upload failed: ${err.message}`, 'danger');
+      } finally {
+        if (dropZone && origHtml) {
+          dropZone.innerHTML = origHtml;
+          const fileInp = document.getElementById('file-upload-input');
+          if (fileInp) fileInp.value = '';
+        }
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // 3. DATASET & REST API CLIENT INTEGRATION
+    // ══════════════════════════════════════════════════════════════
+    let globalMeta = null;
+    let recordsCache = [];
+    let mlChartInstance = null;
+    let analyticsChartInstance = null;
+
+    async function initPlatform() {
+      try {
+        const res = await fetch('/api/meta');
+        const data = await res.json();
+        if (data.status === 'success') {
+          globalMeta = data;
+          document.getElementById('corpus-status').textContent = `Corpus: ${data.total_records.toLocaleString()} Notes`;
+          document.getElementById('metric-records').textContent = data.total_records.toLocaleString();
+          document.getElementById('metric-specialties').textContent = data.specialties_count;
+
+          // Populate specialty dropdowns
+          const specSelect = document.getElementById('specialty-select');
+          const batchSelect = document.getElementById('batch-specialty-select');
+          const mlSpecSelect = document.getElementById('ml-specialty-select');
+          const irSpecFilter = document.getElementById('ir-specialty-filter');
+          specSelect.innerHTML = '';
+          batchSelect.innerHTML = '';
+          if (mlSpecSelect) mlSpecSelect.innerHTML = '';
+          if (irSpecFilter) {
+            irSpecFilter.innerHTML = '<option value="">All Medical Specialties (Corpus)</option>';
+          }
+
+          data.specialties.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s;
+            opt.textContent = s;
+            specSelect.appendChild(opt);
+
+            const opt2 = document.createElement('option');
+            opt2.value = s;
+            opt2.textContent = s;
+            batchSelect.appendChild(opt2);
+
+            if (mlSpecSelect) {
+              const opt3 = document.createElement('option');
+              opt3.value = s;
+              opt3.textContent = s;
+              mlSpecSelect.appendChild(opt3);
+            }
+
+            if (irSpecFilter) {
+              const opt4 = document.createElement('option');
+              opt4.value = s;
+              opt4.textContent = s;
+              irSpecFilter.appendChild(opt4);
+            }
+          });
+
+          // Build 3D sphere from actual dataset specialties
+          build3DKnowledgeGraph(data.top_specialties);
+
+          // Build Analytics Chart
+          renderAnalyticsChart(data.top_specialties);
+
+          // Initialize file drag-and-drop
+          initFileDropZone();
+
+          // Load analytics summary
+          loadAnalyticsData();
+
+          // Load first records
+          await loadRecordsForSpecialty();
+          await loadRecordsForMLSpecialty();
+          await executeAnalysis();
+          updateThemeUI();
+        }
+      } catch (err) {
+        console.error("Init Error:", err);
+        document.getElementById('corpus-status').textContent = 'Server Offline';
+      }
+    }
+
+    async function loadRecordsForSpecialty() {
+      const spec = document.getElementById('specialty-select').value;
+      const res = await fetch(`/api/records?specialty=${encodeURIComponent(spec)}&limit=15`);
+      const data = await res.json();
+
+      if (data.status === 'success' && data.records.length > 0) {
+        recordsCache = data.records;
+        const recSelect = document.getElementById('record-select');
+        recSelect.innerHTML = '';
+        data.records.forEach((r, idx) => {
+          const opt = document.createElement('option');
+          opt.value = idx;
+          opt.textContent = r.sample_name || `Record #${idx + 1}`;
+          recSelect.appendChild(opt);
+        });
+        updateNoteFromRecord();
+      }
+    }
+
+    function updateNoteFromRecord() {
+      const idx = document.getElementById('record-select').value;
+      if (recordsCache[idx]) {
+        document.getElementById('clinical-input').value = recordsCache[idx].text;
+        executeAnalysis();
+      }
+    }
+
+    function viewSelectedPickerRecord() {
+      const idx = document.getElementById('record-select').value;
+      if (recordsCache[idx]) {
+        const r = recordsCache[idx];
+        openPatientModal({
+          sample_name: r.sample_name,
+          specialty: r.specialty,
+          full_text: r.text,
+          word_count: r.text.split(/\s+/).filter(Boolean).length
+        });
+      }
+    }
+
+    function toggleSourceMode() {
+      const mode = document.getElementById('source-mode').value;
+      document.getElementById('dataset-pickers').style.display = (mode === 'dataset') ? 'flex' : 'none';
+      if (mode === 'custom') {
+        document.getElementById('clinical-input').value = `SUBJECTIVE: 58-year-old female presents with acute severe dyspnea, persistent angina, and bilateral lower extremity edema.\nPHYSICAL EXAM: BP is 162/95 mmHg, Heart Rate is 106 bpm.\nMEDICATIONS: Lisinopril 20 mg daily, Furosemide 40 mg twice daily.`;
+        executeAnalysis();
+      } else {
+        updateNoteFromRecord();
+      }
+    }
+
+    // ── ML Classifier Dataset Case Filters & Pickers ────────────
+    let mlRecordsCache = [];
+
+    async function loadRecordsForMLSpecialty() {
+      const specSelect = document.getElementById('ml-specialty-select');
+      if (!specSelect) return;
+      const spec = specSelect.value;
+      if (!spec) return;
+
+      try {
+        const res = await fetch(`/api/records?specialty=${encodeURIComponent(spec)}&limit=30`);
+        const data = await res.json();
+
+        if (data.status === 'success' && data.records && data.records.length > 0) {
+          mlRecordsCache = data.records;
+          const recSelect = document.getElementById('ml-record-select');
+          if (recSelect) {
+            recSelect.innerHTML = '';
+            data.records.forEach((r, idx) => {
+              const opt = document.createElement('option');
+              opt.value = idx;
+              opt.textContent = r.sample_name || `Case #${idx + 1}`;
+              recSelect.appendChild(opt);
+            });
+          }
+          updateMLTextFromRecord();
+        }
+      } catch (err) {
+        console.error("Error loading ML records:", err);
+      }
+    }
+
+    function updateMLTextFromRecord() {
+      const recSelect = document.getElementById('ml-record-select');
+      if (!recSelect) return;
+      const idx = recSelect.value;
+      if (mlRecordsCache[idx]) {
+        const r = mlRecordsCache[idx];
+        const input = document.getElementById('ml-input');
+        if (input) input.value = r.text;
+        const meta = document.getElementById('ml-case-meta');
+        if (meta) {
+          const words = r.text.trim().split(/\s+/).filter(Boolean).length;
+          meta.textContent = `${words} words • ${r.specialty}`;
+        }
+        spotlight3DSpecialty(r.specialty);
+      }
+    }
+
+    function viewSelectedMLRecord() {
+      const recSelect = document.getElementById('ml-record-select');
+      if (!recSelect) return;
+      const idx = recSelect.value;
+      if (mlRecordsCache[idx]) {
+        const r = mlRecordsCache[idx];
+        openPatientModal({
+          sample_name: r.sample_name,
+          specialty: r.specialty,
+          full_text: r.text,
+          word_count: r.text.split(/\s+/).filter(Boolean).length
+        });
+      }
+    }
+
+    function toggleMLSourceMode() {
+      const mode = document.getElementById('ml-source-mode').value;
+      const pickers = document.getElementById('ml-dataset-pickers');
+      if (pickers) pickers.style.display = (mode === 'dataset') ? 'flex' : 'none';
+      if (mode === 'custom') {
+        const meta = document.getElementById('ml-case-meta');
+        if (meta) meta.textContent = 'Custom Note';
+        document.getElementById('ml-input').value = `Patient underwent a right knee arthroscopy with partial medial meniscectomy. Full weight bearing tolerated with crutches.`;
+      } else {
+        updateMLTextFromRecord();
+      }
+    }
+
+    // ── Loading Helper ──────────────────────────────────────────
+    function showLoading(id) {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'flex';
+    }
+    function hideLoading(id) {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    }
+
+    let currentDeepMiningSummary = '';
+
+    function copyDeepMiningSummary() {
+      if (!currentDeepMiningSummary) {
+        const text = document.getElementById('summary-output')?.textContent || '';
+        if (text) currentDeepMiningSummary = text;
+      }
+      if (!currentDeepMiningSummary) return;
+
+      navigator.clipboard.writeText(currentDeepMiningSummary).then(() => {
+        const btnText = document.getElementById('dm-copy-summary-text');
+        if (btnText) {
+          const old = btnText.textContent;
+          btnText.textContent = '✅ Copied!';
+          setTimeout(() => { btnText.textContent = old; }, 2000);
+        }
+      });
+    }
+
+    async function executeAnalysis() {
+      const text = document.getElementById('clinical-input').value;
+      const num_sentences = document.getElementById('length-select').value;
+      const method = document.getElementById('algo-select').value;
+
+      showLoading('loading-summary');
+
+      try {
+        const res = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, num_sentences, method })
+        });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+          currentDeepMiningSummary = data.summary;
+
+          // 1. Header & 3D Node
+          const methodBadge = document.getElementById('analysis-method-badge');
+          if (methodBadge) methodBadge.textContent = method;
+          const nodeName = document.getElementById('analysis-3d-node-name');
+          if (nodeName) nodeName.textContent = data.predicted_specialty || 'Clinical';
+          spotlight3DSpecialty(data.predicted_specialty);
+
+          // 2. Top Strip Metrics
+          const mComp = document.getElementById('metric-compression');
+          if (mComp) mComp.textContent = data.lexical_stats?.compression_ratio || '—';
+          const mRouge = document.getElementById('metric-rouge');
+          if (mRouge && data.rouge) mRouge.textContent = `${data.rouge['ROUGE-1']}%`;
+          const mAcuity = document.getElementById('metric-acuity');
+          if (mAcuity && data.acuity) {
+            mAcuity.textContent = `${data.acuity.level}`;
+            mAcuity.style.color = data.acuity.color;
+          }
+
+          // 3. Deep Mining 4 KPI Cards
+          const dmComp = document.getElementById('dm-metric-compression');
+          if (dmComp) dmComp.textContent = data.lexical_stats?.compression_ratio || '—';
+          const dmWordsDiff = document.getElementById('dm-metric-words-diff');
+          if (dmWordsDiff && data.lexical_stats) {
+            dmWordsDiff.textContent = `${data.lexical_stats.original_word_count} → ${data.lexical_stats.summary_word_count} words`;
+          }
+
+          const dmRouge1 = document.getElementById('dm-metric-rouge1');
+          if (dmRouge1 && data.rouge) dmRouge1.textContent = `${data.rouge['ROUGE-1']}%`;
+          const dmRougeSub = document.getElementById('dm-metric-rouge-sub');
+          if (dmRougeSub && data.rouge) {
+            dmRougeSub.textContent = `ROUGE-2: ${data.rouge['ROUGE-2']}% · L: ${data.rouge['ROUGE-L']}%`;
+          }
+
+          const dmAcuLvl = document.getElementById('dm-metric-acuity-level');
+          if (dmAcuLvl && data.acuity) {
+            dmAcuLvl.textContent = data.acuity.level;
+            dmAcuLvl.style.color = data.acuity.color || 'var(--primary)';
+          }
+          const dmAcuScore = document.getElementById('dm-metric-acuity-score');
+          if (dmAcuScore && data.acuity) {
+            dmAcuScore.textContent = `Risk Score: ${data.acuity.score}/100`;
+          }
+
+          const dmPredSpec = document.getElementById('dm-metric-predicted-spec');
+          if (dmPredSpec) dmPredSpec.textContent = data.predicted_specialty || 'Clinical';
+          const dmSpecProb = document.getElementById('dm-metric-spec-prob');
+          if (dmSpecProb) {
+            const topProb = data.specialty_probabilities ? data.specialty_probabilities[data.predicted_specialty] : null;
+            dmSpecProb.textContent = topProb ? `${topProb}% probability confidence` : 'ML Prediction';
+          }
+
+          // 4. Clinical Acuity & Urgency Triage Findings
+          const dmAcuPill = document.getElementById('dm-acuity-badge-pill');
+          if (dmAcuPill && data.acuity) {
+            dmAcuPill.textContent = `${data.acuity.level} (${data.acuity.score}/100)`;
+            dmAcuPill.style.background = data.acuity.color;
+          }
+          const dmCues = document.getElementById('dm-acuity-cues');
+          if (dmCues) {
+            dmCues.innerHTML = '';
+            const crit = data.acuity?.critical_matches || [];
+            const mod = data.acuity?.moderate_matches || [];
+            if (crit.length === 0 && mod.length === 0) {
+              dmCues.innerHTML = `<span style="font-size:0.74rem; color:var(--success); font-weight:500;">✅ Stable Clinical Presentation: No acute emergency triggers or high-risk keywords detected in narrative.</span>`;
+            } else {
+              crit.forEach(c => {
+                const tag = document.createElement('span');
+                tag.className = 'match-pill';
+                tag.style.background = '#ef4444';
+                tag.style.fontSize = '0.67rem';
+                tag.innerHTML = `🚨 High-Risk: ${c}`;
+                dmCues.appendChild(tag);
+              });
+              mod.forEach(m => {
+                const tag = document.createElement('span');
+                tag.className = 'match-pill';
+                tag.style.background = '#f59e0b';
+                tag.style.fontSize = '0.67rem';
+                tag.innerHTML = `⚠️ Moderate: ${m}`;
+                dmCues.appendChild(tag);
+              });
+            }
+          }
+
+          // 5. Salience Extractive Medical Summary
+          const summEl = document.getElementById('summary-output');
+          if (summEl) summEl.textContent = data.summary || 'No summary generated.';
+          const summStats = document.getElementById('dm-summary-stats');
+          if (summStats) {
+            const savedTime = data.lexical_stats?.reading_time_saved_min || 0;
+            summStats.innerHTML = `
+              <span><strong>${data.sentence_count || 4}</strong> Salient Sentences Extracted</span>
+              <span>•</span>
+              <span>Saved <strong>~${savedTime} min</strong> Reading Time</span>
+              <span>•</span>
+              <span>Method: <strong>${method}</strong></span>
+            `;
+          }
+
+          // 6. Medical Specialty Probability Distribution Bars
+          const dmSpecBars = document.getElementById('dm-specialty-bars');
+          if (dmSpecBars) {
+            dmSpecBars.innerHTML = '';
+            if (data.specialty_probabilities) {
+              const topEntries = Object.entries(data.specialty_probabilities).slice(0, 4);
+              topEntries.forEach(([name, prob]) => {
+                const row = document.createElement('div');
+                row.className = 'pm-spec-row';
+                row.innerHTML = `
+                  <span class="pm-spec-name" title="${name}">${name}</span>
+                  <div class="pm-spec-track">
+                    <div class="pm-spec-fill" style="width: ${Math.max(prob, 2)}%;"></div>
+                  </div>
+                  <span class="pm-spec-pct">${prob}%</span>
+                `;
+                dmSpecBars.appendChild(row);
+              });
+            }
+          }
+
+          // 7. Full NER Entities
+          lastDeepMiningData = data;
+          const ent = data.entities || {};
+          const setNer = (id, list) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = (list && list.length) ? list.join(', ') : 'None detected';
+          };
+          setNer('ner-bp', ent.vitals_bp);
+          setNer('ner-hr', ent.vitals_hr);
+          setNer('ner-temp', ent.vitals_temp);
+          setNer('ner-spo2', ent.vitals_spo2);
+          setNer('ner-rr', ent.vitals_rr);
+          setNer('ner-weight', ent.vitals_weight);
+          setNer('ner-dosages', ent.dosages);
+          setNer('ner-demographics', ent.demographics);
+          setNer('ner-allergies', ent.allergies);
+
+          // 8. Keywords Cloud
+          const kwBox = document.getElementById('keywords-cloud');
+          if (kwBox) {
+            kwBox.innerHTML = '';
+            if (data.top_keywords) {
+              Object.entries(data.top_keywords).slice(0, 14).forEach(([kw, weight]) => {
+                const tag = document.createElement('span');
+                tag.className = 'entity-tag';
+                tag.innerHTML = `${kw} <span style="opacity: 0.6; font-size: 0.62rem; margin-left: 2px;">(${weight.toFixed(2)})</span>`;
+                kwBox.appendChild(tag);
+              });
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Deep Mining Execution Error:", e);
+      } finally {
+        hideLoading('loading-summary');
+      }
+    }
+
+    let lastDeepMiningData = null;
+
+    function downloadDeepMiningJSON() {
+      if (!lastDeepMiningData) {
+        showToast("⚠️ No analysis results to export yet.", "warning");
+        return;
+      }
+      const blob = new Blob([JSON.stringify(lastDeepMiningData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `clinical_nlp_report_${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("📥 Exported Clinical JSON Report", "success");
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // 3. PATIENT CLINICAL CASE DETAILS MODAL & 3D IN-MODAL MINING
+    // ══════════════════════════════════════════════════════════════
+    let currentModalRecord = null;
+    let currentModalAnalysisData = null;
+    let activeSpotlightMesh = null;
+
+    function reset3DSpotlight() {
+      if (activeSpotlightMesh) {
+        if (activeSpotlightMesh.userData && activeSpotlightMesh.userData.baseColor) {
+          activeSpotlightMesh.material.emissive.copy(activeSpotlightMesh.userData.baseColor).multiplyScalar(0.25);
+        }
+        activeSpotlightMesh.material.emissiveIntensity = 0.25;
+        activeSpotlightMesh.scale.setScalar(1);
+        activeSpotlightMesh = null;
+      }
+    }
+
+    function spotlight3DSpecialty(specName) {
+      if (!specName || !nodeMeshes || nodeMeshes.length === 0) return;
+      const cleanTarget = specName.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+      let matchedMesh = nodeMeshes.find(m => {
+        const sName = (m.userData?.spec?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        return sName === cleanTarget;
+      });
+
+      if (!matchedMesh) {
+        matchedMesh = nodeMeshes.find(m => {
+          const sName = (m.userData?.spec?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          return sName.includes(cleanTarget) || cleanTarget.includes(sName);
+        });
+      }
+
+      if (matchedMesh) {
+        reset3DSpotlight();
+        activeSpotlightMesh = matchedMesh;
+        matchedMesh.material.emissive.set(0x38bdf8);
+        matchedMesh.material.emissiveIntensity = 1.0;
+        matchedMesh.scale.setScalar(1.35);
+
+        // Smoothly pan camera target slightly toward this node
+        if (controls) {
+          controls.autoRotate = false;
+          const startTarget = controls.target.clone();
+          const endTarget = matchedMesh.position.clone().multiplyScalar(0.45);
+          let progress = 0;
+          function stepCamera() {
+            progress += 0.06;
+            controls.target.lerpVectors(startTarget, endTarget, Math.min(progress, 1));
+            if (progress < 1) requestAnimationFrame(stepCamera);
+          }
+          stepCamera();
+        }
+      }
+    }
+
+    function openPatientModal(record) {
+      if (!record) return;
+      currentModalRecord = record;
+      currentModalAnalysisData = null;
+
+      // Reset in-modal analysis section
+      const analysisSection = document.getElementById('pm-analysis-section');
+      const analysisLoading = document.getElementById('pm-analysis-loading');
+      const analysisResults = document.getElementById('pm-analysis-results');
+      if (analysisSection) analysisSection.style.display = 'none';
+      if (analysisLoading) analysisLoading.style.display = 'none';
+      if (analysisResults) analysisResults.style.display = 'none';
+
+      // Reset footer buttons
+      const analyzeBtn = document.getElementById('pm-analyze-btn');
+      if (analyzeBtn) {
+        analyzeBtn.innerHTML = '<span>⚡ Analyze </span>';
+        analyzeBtn.disabled = false;
+      }
+      const copySummaryBtn = document.getElementById('pm-footer-copy-summary');
+      if (copySummaryBtn) copySummaryBtn.style.display = 'none';
+
+      document.getElementById('pm-title').textContent = record.sample_name || 'Clinical Case';
+      document.getElementById('pm-specialty-badge').textContent = record.specialty || 'General';
+
+      // Match score or Metric pill
+      const scorePill = document.getElementById('pm-score-pill');
+      if (record.score !== undefined && record.score !== null) {
+        scorePill.style.display = 'inline-block';
+        const label = record.scoreLabel || 'Match';
+        scorePill.textContent = `${record.score}% ${label}`;
+      } else {
+        scorePill.style.display = 'none';
+      }
+
+      // Acuity badge
+      const acuityBadge = document.getElementById('pm-acuity-badge');
+      if (record.acuity && record.acuity.level) {
+        acuityBadge.style.display = 'inline-block';
+        acuityBadge.textContent = record.acuity.level;
+        acuityBadge.style.background = record.acuity.color || 'var(--primary)';
+      } else {
+        acuityBadge.style.display = 'none';
+      }
+
+      // Extracted Vitals & Entities
+      const ent = record.entities || {};
+      const setVal = (id, list) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = (list && list.length) ? list.join(', ') : 'None documented';
+      };
+      setVal('pm-bp', ent.vitals_bp);
+      setVal('pm-hr', ent.vitals_hr);
+      setVal('pm-temp', ent.vitals_temp);
+      setVal('pm-spo2', ent.vitals_spo2);
+      setVal('pm-rr', ent.vitals_rr);
+      setVal('pm-dosages', ent.dosages);
+      setVal('pm-demographics', ent.demographics);
+
+      // Full Narrative
+      const rawText = record.full_text || record.summary || record.snippet || '';
+      document.getElementById('pm-narrative').textContent = rawText;
+      const wordCount = rawText.trim().split(/\s+/).filter(Boolean).length;
+      document.getElementById('pm-word-count').textContent = `${wordCount} words`;
+
+      document.getElementById('pm-meta-info').textContent = `${record.specialty || 'Clinical'} • ${wordCount} Words • MTSamples Record`;
+
+      // Open Modal Window
+      const backdrop = document.getElementById('patient-modal-backdrop');
+      if (backdrop) backdrop.style.display = 'flex';
+    }
+
+    function closePatientModal() {
+      const backdrop = document.getElementById('patient-modal-backdrop');
+      if (backdrop) backdrop.style.display = 'none';
+      reset3DSpotlight();
+    }
+
+    function handleBackdropClick(event) {
+      if (event.target && event.target.id === 'patient-modal-backdrop') {
+        closePatientModal();
+      }
+    }
+
+    function copyPatientNarrative() {
+      if (!currentModalRecord) return;
+      const text = currentModalRecord.full_text || currentModalRecord.summary || '';
+      navigator.clipboard.writeText(text).then(() => {
+        const btnText = document.getElementById('pm-copy-btn-text');
+        const oldText = btnText.textContent;
+        btnText.textContent = '✅ Copied!';
+        setTimeout(() => { btnText.textContent = oldText; }, 2000);
+      });
+    }
+
+    function copyModalSummary() {
+      if (!currentModalAnalysisData || !currentModalAnalysisData.summary) return;
+      navigator.clipboard.writeText(currentModalAnalysisData.summary).then(() => {
+        const btnText = document.getElementById('pm-copy-summary-text');
+        const footerBtnText = document.getElementById('pm-footer-copy-summary-text');
+        if (btnText) {
+          const old = btnText.textContent;
+          btnText.textContent = '✅ Copied!';
+          setTimeout(() => { btnText.textContent = old; }, 2000);
+        }
+        if (footerBtnText) {
+          const old2 = footerBtnText.textContent;
+          footerBtnText.textContent = '✅ Copied!';
+          setTimeout(() => { footerBtnText.textContent = old2; }, 2000);
+        }
+      });
+    }
+
+    // ── Execute 3D Deep Mining Directly Inside the Modal ──
+    async function analyzeInModal() {
+      if (!currentModalRecord) return;
+      const text = currentModalRecord.full_text || currentModalRecord.summary || '';
+      if (!text) return;
+
+      const btn = document.getElementById('pm-analyze-btn');
+      const section = document.getElementById('pm-analysis-section');
+      const loading = document.getElementById('pm-analysis-loading');
+      const results = document.getElementById('pm-analysis-results');
+
+      if (section) section.style.display = 'flex';
+      if (loading) loading.style.display = 'flex';
+      if (results) results.style.display = 'none';
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳ Deep Mining...</span>';
+      }
+
+      // Smooth scroll inside modal down to loading indicator
+      setTimeout(() => {
+        if (section) section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 50);
+
+      // Spotlight 3D knowledge node in Three.js background
+      spotlight3DSpecialty(currentModalRecord.specialty);
+
+      try {
+        const res = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: text,
+            num_sentences: 4,
+            method: 'TF-IDF Extractive'
+          })
+        });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+          currentModalAnalysisData = data;
+          renderModalAnalysisResults(data, currentModalRecord);
+
+          if (loading) loading.style.display = 'none';
+          if (results) results.style.display = 'flex';
+
+          // Spotlight predicted specialty if classified
+          if (data.predicted_specialty) {
+            spotlight3DSpecialty(data.predicted_specialty);
+          }
+
+          // Show copy summary button in modal footer
+          const footerCopy = document.getElementById('pm-footer-copy-summary');
+          if (footerCopy) footerCopy.style.display = 'inline-flex';
+
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<span>⚡ Re-Analyze</span>';
+          }
+
+          // Smoothly scroll down to full analysis results
+          setTimeout(() => {
+            if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 100);
+        } else {
+          if (loading) {
+            loading.innerHTML = `<div style="color:var(--danger); font-size:0.8rem;">⚠️ Analysis failed: ${data.message || 'Unknown error'}</div>`;
+          }
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<span>⚡ Analyze</span>';
+          }
+        }
+      } catch (err) {
+        console.error("Modal Analysis API Error:", err);
+        if (loading) {
+          loading.innerHTML = `<div style="color:var(--danger); font-size:0.8rem;">⚠️ Connection Error: Failed to reach /api/analyze</div>`;
+        }
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<span>⚡ Analyze </span>';
+        }
+      }
+    }
+
+    function renderModalAnalysisResults(data, record) {
+      // 3D Synapse node indicator
+      const nodeNameEl = document.getElementById('pm-3d-node-name');
+      if (nodeNameEl) {
+        nodeNameEl.textContent = data.predicted_specialty || record.specialty || 'General Clinical';
+      }
+
+      // 1. Quantitative Metrics Ribbon
+      const compEl = document.getElementById('pm-metric-compression');
+      if (compEl) compEl.textContent = data.lexical_stats?.compression_ratio || '—';
+      const wordsDiffEl = document.getElementById('pm-metric-words-diff');
+      if (wordsDiffEl && data.lexical_stats) {
+        wordsDiffEl.textContent = `${data.lexical_stats.original_word_count} → ${data.lexical_stats.summary_word_count} words`;
+      }
+
+      const rougeEl = document.getElementById('pm-metric-rouge1');
+      if (rougeEl) rougeEl.textContent = `${data.rouge?.['ROUGE-1'] || 0}%`;
+      const rougeSub = document.getElementById('pm-metric-rouge-sub');
+      if (rougeSub && data.rouge) {
+        rougeSub.textContent = `ROUGE-2: ${data.rouge['ROUGE-2']}% · L: ${data.rouge['ROUGE-L']}%`;
+      }
+
+      const acuLvlEl = document.getElementById('pm-metric-acuity-level');
+      if (acuLvlEl && data.acuity) {
+        acuLvlEl.textContent = data.acuity.level;
+        acuLvlEl.style.color = data.acuity.color || 'var(--primary)';
+      }
+      const acuScoreEl = document.getElementById('pm-metric-acuity-score');
+      if (acuScoreEl && data.acuity) {
+        acuScoreEl.textContent = `Risk Score: ${data.acuity.score}/100`;
+      }
+
+      const predSpecEl = document.getElementById('pm-metric-predicted-spec');
+      if (predSpecEl) predSpecEl.textContent = data.predicted_specialty || 'Clinical';
+      const specProbEl = document.getElementById('pm-metric-spec-prob');
+      if (specProbEl) {
+        const topProb = data.specialty_probabilities ? data.specialty_probabilities[data.predicted_specialty] : null;
+        specProbEl.textContent = topProb ? `${topProb}% probability confidence` : 'AI Classification';
+      }
+
+      // 2. Clinical Acuity & Triage Box
+      const acuPill = document.getElementById('pm-acuity-badge-pill');
+      if (acuPill && data.acuity) {
+        acuPill.textContent = `${data.acuity.level} (${data.acuity.score}/100)`;
+        acuPill.style.background = data.acuity.color;
+      }
+      const cuesBox = document.getElementById('pm-acuity-cues');
+      if (cuesBox) {
+        cuesBox.innerHTML = '';
+        const crit = data.acuity?.critical_matches || [];
+        const mod = data.acuity?.moderate_matches || [];
+        if (crit.length === 0 && mod.length === 0) {
+          cuesBox.innerHTML = `<span style="font-size:0.74rem; color:var(--success); font-weight:500;">✅ Stable Clinical Presentation: No acute high-risk keywords detected in narrative.</span>`;
+        } else {
+          crit.forEach(c => {
+            const tag = document.createElement('span');
+            tag.className = 'match-pill';
+            tag.style.background = '#ef4444';
+            tag.style.fontSize = '0.67rem';
+            tag.innerHTML = `🚨 High-Risk: ${c}`;
+            cuesBox.appendChild(tag);
+          });
+          mod.forEach(m => {
+            const tag = document.createElement('span');
+            tag.className = 'match-pill';
+            tag.style.background = '#f59e0b';
+            tag.style.fontSize = '0.67rem';
+            tag.innerHTML = `⚠️ Moderate: ${m}`;
+            cuesBox.appendChild(tag);
+          });
+        }
+      }
+
+      // 3. Salience Extractive Medical Summary
+      const summaryOut = document.getElementById('pm-summary-output');
+      if (summaryOut) summaryOut.textContent = data.summary || 'No summary generated.';
+      const summaryStats = document.getElementById('pm-summary-stats');
+      if (summaryStats) {
+        const savedTime = data.lexical_stats?.reading_time_saved_min || 0;
+        summaryStats.innerHTML = `
+          <span><strong>${data.sentence_count || 4}</strong> Salient Sentences Extracted</span>
+          <span>•</span>
+          <span>Saved <strong>~${savedTime} min</strong> Reading Time</span>
+          <span>•</span>
+          <span>Method: <strong>TF-IDF Vector Salience</strong></span>
+        `;
+      }
+
+      // 4. Medical Specialty Probabilities Breakdown
+      const specBars = document.getElementById('pm-specialty-bars');
+      if (specBars) {
+        specBars.innerHTML = '';
+        if (data.specialty_probabilities) {
+          const topEntries = Object.entries(data.specialty_probabilities).slice(0, 4);
+          topEntries.forEach(([name, prob]) => {
+            const row = document.createElement('div');
+            row.className = 'pm-spec-row';
+            row.innerHTML = `
+              <span class="pm-spec-name" title="${name}">${name}</span>
+              <div class="pm-spec-track">
+                <div class="pm-spec-fill" style="width: ${Math.max(prob, 2)}%;"></div>
+              </div>
+              <span class="pm-spec-pct">${prob}%</span>
+            `;
+            specBars.appendChild(row);
+          });
+        }
+      }
+
+      // 5. NER Entities & Quantitative Measurements
+      const ent = data.entities || {};
+      const setNer = (id, list) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = (list && list.length) ? list.join(', ') : 'None detected';
+      };
+      setNer('pm-ner-bp', ent.vitals_bp);
+      setNer('pm-ner-hr', ent.vitals_hr);
+      setNer('pm-ner-temp', ent.vitals_temp);
+      setNer('pm-ner-spo2', ent.vitals_spo2);
+      setNer('pm-ner-rr', ent.vitals_rr);
+      setNer('pm-ner-weight', ent.vitals_weight);
+      setNer('pm-ner-dosages', ent.dosages);
+      setNer('pm-ner-demographics', ent.demographics);
+      setNer('pm-ner-allergies', ent.allergies);
+
+      // 6. TF-IDF Semantic Salience Keywords
+      const kwBox = document.getElementById('pm-keywords-cloud');
+      if (kwBox) {
+        kwBox.innerHTML = '';
+        if (data.top_keywords) {
+          Object.entries(data.top_keywords).slice(0, 14).forEach(([kw, weight]) => {
+            const tag = document.createElement('span');
+            tag.className = 'entity-tag';
+            tag.innerHTML = `${kw} <span style="opacity: 0.6; font-size: 0.62rem; margin-left: 2px;">(${weight.toFixed(2)})</span>`;
+            kwBox.appendChild(tag);
+          });
+        }
+      }
+    }
+
+    function loadModalPatientToMining() {
+      if (!currentModalRecord) return;
+      const text = currentModalRecord.full_text || currentModalRecord.summary || '';
+      closePatientModal();
+
+      document.getElementById('source-mode').value = 'custom';
+      toggleSourceMode();
+      document.getElementById('clinical-input').value = text;
+
+      // Switch to analysis tab
+      const tabBtns = document.querySelectorAll('.nav-btn');
+      if (tabBtns.length > 0) {
+        tabBtns.forEach(btn => btn.classList.remove('active'));
+        tabBtns[0].classList.add('active');
+      }
+      switchView('analysis');
+      executeAnalysis();
+    }
+
+    // ESC to close modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closePatientModal();
+    });
+
+    // ── IR Vector Space Semantic Search ──────────────────────────
+    async function executeIRSearch() {
+      const query = document.getElementById('ir-query').value;
+      const top_k = document.getElementById('ir-top-k').value;
+      const specFilter = document.getElementById('ir-specialty-filter');
+      const specialty = specFilter ? specFilter.value : '';
+      const container = document.getElementById('ir-results-container');
+
+      showLoading('loading-ir');
+
+      try {
+        const res = await fetch('/api/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query, top_k, specialty })
+        });
+        const data = await res.json();
+
+        if (data.status === 'success' && data.results && data.results.length > 0) {
+          container.innerHTML = '';
+          data.results.forEach((r, i) => {
+            const item = document.createElement('div');
+            item.className = 'search-item clickable-card';
+            item.onclick = () => openPatientModal(r);
+            item.title = 'Click to view full patient case report';
+
+            // Highlight matched search terms in snippet
+            let highlightedSnippet = r.snippet || '';
+            if (r.matched_terms && r.matched_terms.length > 0) {
+              const termsRegex = new RegExp(`\\b(${r.matched_terms.map(t => t.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')).join('|')})\\b`, 'gi');
+              highlightedSnippet = highlightedSnippet.replace(termsRegex, '<mark class="query-mark">$1</mark>');
+            }
+
+            item.innerHTML = `
+              <div class="search-top">
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <strong style="color: var(--text-main); font-size: 0.88rem; font-weight: 550;">#${i + 1} • ${r.sample_name}</strong>
+                  <span class="view-detail-hint">👁️ View Details</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:5px;">
+                  ${r.acuity ? `<span class="match-pill" style="background:${r.acuity.color}; font-size:0.66rem;">${r.acuity.level}</span>` : ''}
+                  <span class="match-pill">${r.score}% Match</span>
+                </div>
+              </div>
+              <div style="font-size: 0.74rem; color: var(--primary); font-weight: 500; margin-bottom: 3px;">🏥 ${r.specialty}</div>
+              <p style="font-size: 0.79rem; color: var(--text-sub); line-height: 1.45;">${highlightedSnippet}</p>
+            `;
+            container.appendChild(item);
+          });
+        } else {
+          container.innerHTML = `<div style="padding:1.5rem; text-align:center; color:var(--text-muted); font-size:0.85rem;">No matching medical records found for "${query}". Try different clinical terms or select "All Medical Specialties".</div>`;
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        hideLoading('loading-ir');
+      }
+    }
+
+    async function executeMLClassify() {
+      const text = document.getElementById('ml-input').value;
+      showLoading('loading-ml');
+
+      try {
+        const res = await fetch('/api/classify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+          document.getElementById('ml-prediction-text').textContent = data.prediction;
+          renderMLChart(data.probabilities);
+          spotlight3DSpecialty(data.prediction);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        hideLoading('loading-ml');
+      }
+    }
+
+    function renderMLChart(probDict) {
+      const ctx = document.getElementById('mlChart').getContext('2d');
+      const labels = Object.keys(probDict).slice(0, 6);
+      const values = Object.values(probDict).slice(0, 6);
+      const isDark = currentTheme === 'dark';
+
+      if (mlChartInstance) mlChartInstance.destroy();
+
+      mlChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Confidence Probability (%)',
+            data: values,
+            backgroundColor: 'rgba(2, 132, 199, 0.75)',
+            borderColor: '#0284c7',
+            borderWidth: 1.5,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' },
+              ticks: { color: isDark ? '#94a3b8' : '#64748b' }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { color: isDark ? '#94a3b8' : '#64748b' }
+            }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    function renderAnalyticsChart(topList) {
+      const ctx = document.getElementById('analyticsChart').getContext('2d');
+      const labels = topList.slice(0, 14).map(t => t.name);
+      const values = topList.slice(0, 14).map(t => t.count);
+      const isDark = currentTheme === 'dark';
+
+      if (analyticsChartInstance) analyticsChartInstance.destroy();
+
+      analyticsChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Patient Transcriptions',
+            data: values,
+            backgroundColor: 'rgba(99, 102, 241, 0.75)',
+            borderColor: '#6366f1',
+            borderWidth: 1.5,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' },
+              ticks: { color: isDark ? '#94a3b8' : '#64748b' }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { color: isDark ? '#94a3b8' : '#64748b', font: { size: 10 } }
+            }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    let acuityDoughnutChartInstance = null;
+
+    async function loadAnalyticsData() {
+      try {
+        const res = await fetch('/api/analytics');
+        const data = await res.json();
+        if (data.status === 'success') {
+          const elRec = document.getElementById('analytics-total-records');
+          if (elRec) elRec.textContent = (data.total_records || globalMeta?.total_records || 4966).toLocaleString();
+          const elSpec = document.getElementById('analytics-total-specialties');
+          if (elSpec) elSpec.textContent = globalMeta?.specialties_count || 40;
+          const elWords = document.getElementById('analytics-total-words');
+          if (elWords) elWords.textContent = (data.total_words ? `${(data.total_words / 1000000).toFixed(2)}M Words` : '2.31M Words');
+          const elAvg = document.getElementById('analytics-avg-words');
+          const avgWords = Math.round(data.avg_words_per_record || data.avg_words_per_note || 465);
+          if (elAvg) elAvg.textContent = `${avgWords} Words`;
+
+          if (globalMeta && globalMeta.top_specialties) {
+            renderAnalyticsChart(globalMeta.top_specialties);
+          }
+          if (data.acuity_distribution) {
+            renderAcuityDoughnutChart(data.acuity_distribution);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load analytics:", err);
+      }
+    }
+
+    function renderAcuityDoughnutChart(dist) {
+      const canvas = document.getElementById('acuityDoughnutChart');
+      if (!canvas || !dist) return;
+      const ctx = canvas.getContext('2d');
+      if (acuityDoughnutChartInstance) acuityDoughnutChartInstance.destroy();
+
+      const labels = Object.keys(dist);
+      const values = Object.values(dist);
+      const colorMap = {
+        'Routine / Low Acuity': '#10b981',
+        'Moderate Acuity': '#f59e0b',
+        'High / Critical Risk': '#ef4444',
+        'Stable / Routine': '#10b981',
+        'Moderate Attention': '#f59e0b',
+        'High Risk': '#f97316',
+        'Critical Emergency': '#ef4444'
+      };
+      const bgColors = labels.map(l => colorMap[l] || '#0284c7');
+      const isDark = currentTheme === 'dark';
+
+      acuityDoughnutChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: values,
+            backgroundColor: bgColors,
+            borderWidth: 2,
+            borderColor: isDark ? '#0f172a' : '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: {
+                color: isDark ? '#94a3b8' : '#475569',
+                font: { size: 11, weight: '500' },
+                boxWidth: 12,
+                padding: 10
+              }
+            }
+          },
+          cutout: '62%'
+        }
+      });
+    }
+
+    let currentBatchResults = [];
+
+    async function executeBatch() {
+      const specialty = document.getElementById('batch-specialty-select').value;
+      const count = document.getElementById('batch-count').value;
+      const container = document.getElementById('batch-results-container');
+
+      showLoading('loading-batch');
+
+      try {
+        const res = await fetch('/api/batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ specialty, count })
+        });
+        const data = await res.json();
+
+        if (data.status === 'success' && data.results) {
+          currentBatchResults = data.results;
+          container.innerHTML = '';
+          data.results.forEach((r, i) => {
+            const card = document.createElement('div');
+            card.className = 'result-card clickable-card';
+            card.style.marginBottom = '8px';
+            card.onclick = () => openPatientModal({
+              sample_name: r.sample_name,
+              specialty: r.specialty,
+              score: r.rouge1,
+              scoreLabel: 'ROUGE-1',
+              full_text: r.summary,
+              summary: r.summary,
+              word_count: r.summary_words,
+              acuity: { level: r.acuity_level, color: r.acuity_color },
+              entities: { vitals_bp: r.vitals_bp || [], dosages: r.dosages || [] }
+            });
+            card.title = 'View Case Report';
+            card.innerHTML = `
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <strong style="color:var(--text-main); font-size: 0.88rem; font-weight: 550;">#${i + 1} • ${r.sample_name}</strong>
+                  <span class="view-detail-hint">👁️ View Details</span>
+                </div>
+                <span class="match-pill" style="background:${r.acuity_color}; font-size:0.66rem;">${r.acuity_level}</span>
+              </div>
+              <div style="font-size:0.71rem; color:var(--text-muted); margin-bottom:3px;">Original: ${r.original_words} words | Compressed: ${r.compression} | ROUGE-1: ${r.rouge1}%</div>
+              <div class="summary-text-box" style="margin-top:4px;">${r.summary}</div>
+            `;
+            container.appendChild(card);
+          });
+          showToast(`⚡ Batch completed: <strong>${data.results.length} notes mined</strong>`, 'success');
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        hideLoading('loading-batch');
+      }
+    }
+
+    function exportBatchCSV() {
+      if (!currentBatchResults || currentBatchResults.length === 0) {
+        showToast("⚠️ No batch results to export yet. Run batch first.", "warning");
+        return;
+      }
+      const headers = ["ID", "Sample Name", "Specialty", "Acuity Level", "Original Words", "Summary Words", "Compression", "ROUGE-1", "Extracted Summary"];
+      const rows = currentBatchResults.map((r, i) => [
+        i + 1,
+        `"${(r.sample_name || '').replace(/"/g, '""')}"`,
+        `"${(r.specialty || '').replace(/"/g, '""')}"`,
+        `"${(r.acuity_level || '').replace(/"/g, '""')}"`,
+        r.original_words || 0,
+        r.summary_words || 0,
+        `"${(r.compression || '').replace(/"/g, '""')}"`,
+        r.rouge1 || 0,
+        `"${(r.summary || '').replace(/"/g, '""')}"`
+      ]);
+
+      const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(','), ...rows.map(e => e.join(','))].join('\r\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `clinical_batch_summaries_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast(`📥 Exported ${currentBatchResults.length} records to CSV`, "success");
+    }
+
+    // View tab switching
+    function switchView(tabKey) {
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = (window.event && window.event.currentTarget)
+        ? window.event.currentTarget
+        : document.querySelector(`.nav-btn[onclick*="${tabKey}"]`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      const sidebar = document.getElementById('left-sidebar-panel');
+      const workspace = document.getElementById('main-workspace-el');
+
+      // Hide all panels & views
+      ['analysis', 'ir-search', 'ml-classify', 'batch'].forEach(key => {
+        const ctrl = document.getElementById(`ctrl-${key}`);
+        if (ctrl) ctrl.style.display = 'none';
+      });
+
+      document.querySelectorAll('.module-view').forEach(v => v.classList.remove('active-view'));
+
+      // If analytics, use full width layout
+      if (tabKey === 'analytics') {
+        sidebar.style.display = 'none';
+        workspace.classList.add('full-width');
+        document.getElementById('view-analytics').classList.add('active-view');
+        loadAnalyticsData();
+      } else {
+        sidebar.style.display = 'flex';
+        workspace.classList.remove('full-width');
+
+        if (tabKey === 'analysis') {
+          document.getElementById('ctrl-analysis').style.display = 'flex';
+          document.getElementById('view-analysis').classList.add('active-view');
+        } else if (tabKey === 'ir-search') {
+          document.getElementById('ctrl-ir-search').style.display = 'flex';
+          document.getElementById('view-ir-search').classList.add('active-view');
+        } else if (tabKey === 'ml-classify') {
+          document.getElementById('ctrl-ml-classify').style.display = 'flex';
+          document.getElementById('view-ml-classify').classList.add('active-view');
+        } else if (tabKey === 'batch') {
+          document.getElementById('ctrl-batch').style.display = 'flex';
+          document.getElementById('view-batch').classList.add('active-view');
+        }
+      }
+    }
+
+    // Start App
+    window.addEventListener('DOMContentLoaded', initPlatform);
+  </script>
+</body>
+
+</html>
